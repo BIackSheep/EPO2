@@ -60,13 +60,12 @@ int **update_array;
 int **update_array_new;
 int *route;             /*holds a route between 2 stations*/
 int *totalroute;        /*holds a route between all stations*/
+int nr_of_stations;
 
 extern int detection[2];
 int instruction[2] = {0,0};
 
 int zigbee(void);
-
-const int nr_of_stations = 3;
 
 int main(int argc, char const *argv[]) {
     int input_len;
@@ -74,9 +73,11 @@ int main(int argc, char const *argv[]) {
     int *stationinput;   /*list with stations to visit, beginning at station 0*/
     int n;  /*temporary variable*/
 
+    puts("Enter number of blocked edges:\n");
     /*first input, gives input list length*/
     scanf("%i",&input_len);
 
+    puts("Enter the blocked edges:\n");
     /*each edge has 3 array elements*/
     input_list = (int*)calloc(3*input_len, sizeof(int));
     stationinput = (int*)calloc(input_len, sizeof(int));
@@ -96,6 +97,11 @@ int main(int argc, char const *argv[]) {
         }
     }
 
+    puts("Enter the number of stations:\n");
+    /*gives number of stations*/
+    scanf("%i",&nr_of_stations);
+
+    puts("Enter the stations:\n");
     /*reads stations*/
     for(n=0; n<nr_of_stations; ++n) {
         scanf("%i",&stationinput[n]);
@@ -103,14 +109,15 @@ int main(int argc, char const *argv[]) {
 
     shortest_route(input_len, input_list, stationinput);
 
+
+    /*test reading detections from zigbee*/
+    //zigbee();
+    printf("Hello! Robot_Algorithm.c speaking: Zigbee send %i and %i\n",detection[0],detection[1]);
+
     /*test giving instructions to zigbee*/
     instruction[0] = 2;
     instruction[1] = 5;
-    zigbee();
-
-    /*test reading detections from zigbee*/
-    zigbee();
-    printf("Hello! Robot_Algorithm.c speaking: Zigbee send %i and %i\n",detection[0],detection[1]);
+    zigbee();               /*function (called zigbee()) inside Zigbee.c is called*/
 
     free(input_list);
     free(stationinput);
@@ -119,6 +126,7 @@ int main(int argc, char const *argv[]) {
 
 void shortest_route(int input_len, int *input_list, int *stationinput) {
     int n=0,m=0;
+    int index = 0;
     int routelen = 0;
     /*pseudocode for more stations
  try for all combinations of stations:
@@ -130,15 +138,30 @@ void shortest_route(int input_len, int *input_list, int *stationinput) {
 
  is this too slow? C is pretty fast...
  */
-     puts("shortest_route test");
 
+ totalroute = (int*)calloc(100,sizeof(int));
+
+    /*calculates shortest route between every 2 stations*/
      for(n=0;n<nr_of_stations-1;++n) {
         maze_init(input_len, input_list);
         routelen = Lee(stationinput[n],stationinput[n+1]);
-        //for(m=0;m<)
-        //}
-        printf("that route is %i long\n",routelen);
+        /*adds the route between 2 stations to the total route*/
+        for(m=0;m<routelen;m++,index++) {
+            totalroute[index] = route[m];
+        }
      }
+
+    /*print total route*/
+    puts("\n");
+    for(m=0;m<index;m++) {
+        if(totalroute[m]>=10) {
+            printf("c%i ", totalroute[m]);
+        }
+        else {
+            printf("c0%i ", totalroute[m]);
+        }
+    }
+    puts("\n");
 }
 
 /*calculates shortest route between 2 stations, returns number of crossings*/
@@ -265,20 +288,28 @@ int Lee (int station1, int station2) {
         }
     }
 
-    /*print route*/
-    print_matrix();
-    puts("\n");
+    /*removing the empty spaces in the route array*/
+    m=0;
     for(n=1;n<count-1;n++) {
         if(!(n%2)) {
-            if(route[n]>=10) {
-                printf("c%i ", route[n]);
-            }
-            else {
-                printf("c0%i ", route[n]);
-            }
+            *(route+m) = *(route+n);
+            m++;
+        }
+    }
+
+    /*print route*/ /*
+    print_matrix();
+    puts("\n");
+    for(n=0;n<(count-3)/2;n++) {
+        if(route[n]>=10) {
+            printf("c%i ", route[n]);
+        }
+        else {
+            printf("c0%i ", route[n]);
         }
     }
     puts("\n");
+    */
 
     /*free allocated memory*/
     free(update_array);
