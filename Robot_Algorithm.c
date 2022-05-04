@@ -48,8 +48,8 @@
  }
  */
 
-void Lee (int list_len, int *stationinput);
-void shortest_route(int *stationinput);
+int Lee (int station1, int station2);
+void shortest_route(int input_len, int *input_list, int *stationinput);
 void maze_init (int list_len, int* block_list);
 void print_matrix (void);
 
@@ -58,15 +58,15 @@ int *stations[12];
 int *crossings[5][5];
 int **update_array;
 int **update_array_new;
-int *route;
+int *route;             /*holds a route between 2 stations*/
+int *totalroute;        /*holds a route between all stations*/
 
-extern int done;
-int end_instruction = 0;
+extern int detection[2];
 int instruction[2] = {0,0};
 
 int zigbee(void);
 
-const int nr_of_stations = 2;
+const int nr_of_stations = 3;
 
 int main(int argc, char const *argv[]) {
     int input_len;
@@ -101,27 +101,25 @@ int main(int argc, char const *argv[]) {
         scanf("%i",&stationinput[n]);
     }
 
-    maze_init(input_len, input_list);
+    shortest_route(input_len, input_list, stationinput);
 
-    Lee(input_len,stationinput);
-
-    shortest_route(stationinput);
-
-    end_instruction = 1;
-
+    /*test giving instructions to zigbee*/
+    instruction[0] = 2;
+    instruction[1] = 5;
     zigbee();
 
-    if (done == 1) {
-        printf("ZIGBEE IO DONE!\n");
-    }
-
+    /*test reading detections from zigbee*/
+    zigbee();
+    printf("Hello! Robot_Algorithm.c speaking: Zigbee send %i and %i\n",detection[0],detection[1]);
 
     free(input_list);
     free(stationinput);
     return 0;
 }
 
-void shortest_route(int *stationinput) {
+void shortest_route(int input_len, int *input_list, int *stationinput) {
+    int n=0,m=0;
+    int routelen = 0;
     /*pseudocode for more stations
  try for all combinations of stations:
  lee() with station list of first 2 stations
@@ -132,23 +130,36 @@ void shortest_route(int *stationinput) {
 
  is this too slow? C is pretty fast...
  */
- puts("test");
+     puts("shortest_route test");
+
+     for(n=0;n<nr_of_stations-1;++n) {
+        maze_init(input_len, input_list);
+        routelen = Lee(stationinput[n],stationinput[n+1]);
+        //for(m=0;m<)
+        //}
+        printf("that route is %i long\n",routelen);
+     }
 }
 
-void Lee (int list_len, int *stationinput) {
+/*calculates shortest route between 2 stations, returns number of crossings*/
+int Lee (int station1, int station2) {
     int count = 1;
     int n=0;        /*is used for indexing the route array*/
     int m=0;        /*keeps track of index in update_array*/
     int p=0;        /*keeps track of index in update_array_new*/
 
+    //test
+    printf("station1 : %i\n",station1);
+    printf("station2 : %i\n",station2);
+
     update_array = (int**)calloc(30,sizeof(int*)); /*what size? 20 is maximum I found, 30 is for security*/
     update_array_new = (int**)calloc(30,sizeof(int*));
 
-    update_array[0] = stations[stationinput[nr_of_stations-1]-1];
+    update_array[0] = stations[station2 - 1];
     *update_array[0] = count;
 
     /*expand fase*/
-    while(*stations[stationinput[0]-1]==0) {
+    while(*stations[station1 - 1]==0) {
 
         ++count;                                             /*gives higher value to consecutive neighbours*/
 
@@ -206,11 +217,11 @@ void Lee (int list_len, int *stationinput) {
     }
 
     /*Trace back fase*/
-    update_array[0] = stations[stationinput[0]-1];      /*repurposing of update_array for current and visited location*/
+    update_array[0] = stations[station1 - 1];      /*repurposing of update_array for current and visited location*/
     update_array_new[0] = update_array[0];              /*repurposing of update_array_new for updating update_array*/
     m=0;    /*only for clarification, should already be 0*/
 
-    while(update_array[m]!=stations[stationinput[nr_of_stations-1]-1]) {
+    while(update_array[m]!=stations[station2 - 1]) {
         /*right neighbour*/
         if((*(update_array[m]+1)<*(update_array[m]))&&(*(update_array[m]+1)>0)) {
             update_array_new[0] = update_array[m]+1;
@@ -273,6 +284,8 @@ void Lee (int list_len, int *stationinput) {
     free(update_array);
     free(update_array_new);
     free(route);
+
+    return (count-3)/2;
 }
 
 void maze_init (int list_len, int* block_list) {
