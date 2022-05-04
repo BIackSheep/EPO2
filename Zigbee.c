@@ -8,9 +8,7 @@
 #define COMPORT "COM5"
 #define BAUDRATE CBR_9600
 
-
-int done = 0;
-extern int end_instruction;
+int detection[2] = {0,1};
 extern int instruction[2];
 
 void initSio(HANDLE hSerial){
@@ -87,9 +85,6 @@ int zigbee()
 {
     HANDLE hSerial;
 
-
-    char byteBuffer[BUFSIZ+1];
-
     //----------------------------------------------------------
     // Open COMPORT for reading and writing
     //----------------------------------------------------------
@@ -117,16 +112,13 @@ int zigbee()
 
     initSio(hSerial);
 
-    while ( 1 ) {
-        if (end_instruction == 1) // end the loop with a separate instruction
-            puts("jallah");
-            break;
-
-        writeByte(hSerial, instruction);
-        readByte(hSerial, instruction);
-    }
-
-    done = 1;
+    /*
+    A while loop will be needed! first, the Robot_Algorithm.c is executed, initializing the maze, asking for station, etc. Then Zigbee.c has to loop until
+    a crossing or mine is detected, which updates an external variable and quits the loop. The Robot_algorithm then gives a new instruction/calculates a new route,
+    and then Zigbee.c is called again.
+    */
+    writeByte(hSerial, instruction);
+    readByte(hSerial, detection);
 
     CloseHandle(hSerial);
 
