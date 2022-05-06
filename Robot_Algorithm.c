@@ -48,12 +48,6 @@
  }
  */
 
-int Lee (int station1, int station2);
-void shortest_route(int input_len, int *input_list, int *stationinput);
-void maze_init (int list_len, int* block_list);
-void print_matrix (void);
-void current_crossing(int* stationinput);
-
 int maze[13][13];
 int *stations[12];
 int *crossings[5][5];
@@ -63,10 +57,8 @@ int *route;             /*holds a route between 2 stations*/
 int *totalroute;        /*holds a route between all stations*/
 int nr_of_stations;
 
-extern int detection[2];
+/*external variable*/
 int instruction[2] = {0,0};
-
-int zigbee(void);
 
 int main(int argc, char const *argv[]) {
     int input_len;

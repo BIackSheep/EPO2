@@ -7,8 +7,8 @@
 #define COMPORT "COM6"
 #define BAUDRATE CBR_9600
 
+/*external variable*/
 int detection[2] = {0,0};
-extern int instruction[2];
 
 //--------------------------------------------------------------
 // Function: initSio
