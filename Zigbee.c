@@ -2,15 +2,20 @@
 #include <stdlib.h>
 #include <Windows.h>
 #include <string.h>
-
 #include "Robot_Header.h"
 
-#define COMPORT "COM5"
+#define COMPORT "COM6"
 #define BAUDRATE CBR_9600
 
-int detection[2] = {0,1};
+int detection[2] = {0,0};
 extern int instruction[2];
 
+//--------------------------------------------------------------
+// Function: initSio
+// Description: intializes the parameters as Baudrate, Bytesize,
+//           Stopbits, Parity and Timeoutparameters of
+//           the COM port
+//--------------------------------------------------------------
 void initSio(HANDLE hSerial){
 
     COMMTIMEOUTS timeouts ={0};
@@ -18,8 +23,8 @@ void initSio(HANDLE hSerial){
 
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
-        //error getting state
     if (!GetCommState(hSerial, &dcbSerialParams)) {
+        //error getting state
         printf("error getting state \n");
     }
 
@@ -51,15 +56,16 @@ void initSio(HANDLE hSerial){
 // Description: reads a single byte from the COM port into
 //              buffer buffRead
 //--------------------------------------------------------------
-int readByte(HANDLE hSerial, int *buffRead) {
+int readByte(HANDLE hSerial, char *buffRead) {
 
     DWORD dwBytesRead = 0;
 
     if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
     {
-        printf("error reading bytes from input buffer \n");
+        fputs("error reading byte from input buffer \n",stderr);
+        //exit(EXIT_FAILURE);
     }
-    printf("Bytes read from read buffer are: '%i %i' \n", buffRead[0], buffRead[1]);
+    printf("Byte read from read buffer is: %c \n", buffRead[0]);
     return(0);
 }
 
@@ -68,15 +74,16 @@ int readByte(HANDLE hSerial, int *buffRead) {
 // Description: writes a single byte stored in buffRead to
 //              the COM port
 //--------------------------------------------------------------
-int writeByte(HANDLE hSerial, int *buffWrite){
+int writeByte(HANDLE hSerial, char *buffWrite){
 
     DWORD dwBytesWritten = 0;
 
     if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
     {
-        printf("error writing bytes to output buffer \n");
+        fputs("error writing byte to output buffer \n",stderr);
+        //exit(EXIT_FAILURE);
     }
-    printf("Bytes written to write buffer are: '%i %i' \n", buffWrite[0], buffWrite[1]);
+    printf("Byte written to write buffer is: %c \n", buffWrite[0]);
 
     return(0);
 }
@@ -84,6 +91,10 @@ int writeByte(HANDLE hSerial, int *buffWrite){
 int zigbee()
 {
     HANDLE hSerial;
+
+    char byteBufferRead[BUFSIZ+1];
+    char byteBufferWrite[BUFSIZ+1];
+    byteBufferRead[0] = 96;
 
     //----------------------------------------------------------
     // Open COMPORT for reading and writing
@@ -100,10 +111,14 @@ int zigbee()
     if(hSerial == INVALID_HANDLE_VALUE){
         if(GetLastError()== ERROR_FILE_NOT_FOUND){
             //serial port does not exist. Inform user.
-            printf(" serial port does not exist \n");
+            fputs(" serial port does not exist \n",stderr);
+            //exit(EXIT_FAILURE);
         }
         //some other error occurred. Inform user.
-        printf(" some other error occured. Inform user.\n");
+        else {
+            printf(" some other error occured. Inform user.\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
     //----------------------------------------------------------
@@ -112,15 +127,53 @@ int zigbee()
 
     initSio(hSerial);
 
-    /*
-    A while loop will be needed! first, the Robot_Algorithm.c is executed, initializing the maze, asking for station, etc. Then Zigbee.c has to loop until
-    a crossing or mine is detected, which updates an external variable and quits the loop. The Robot_algorithm then gives a new instruction/calculates a new route,
-    and then Zigbee.c is called again.
-    */
-    writeByte(hSerial, instruction);
-    readByte(hSerial, detection);
+    /*sends instructions to VHDL*/
+    if (instruction[0]==1||instruction[1]==1) {
 
-    CloseHandle(hSerial);
+        /*is reset to allow for new detection*/
+        detection[0] = 0;
+
+        /*this is for the biasing*/
+        byteBufferWrite[0] = 96+2*instruction[0]+instruction[1];
+        writeByte(hSerial, byteBufferWrite);
+
+        /*check*/
+        if (instruction[0]==0&&instruction[1]==1) {
+            puts("right");
+        }
+        if (instruction[0]==1&&instruction[1]==0) {
+            puts("left");
+        }
+        if (instruction[0]==1&&instruction[1]==1) {
+            puts("straight on");
+        }
+    }
+    /*waits for a detection*/
+    else {
+        while ( 1 ) {
+            /*Waits for an (update in) input*/
+            readByte(hSerial, byteBufferRead);
+
+            /*One byte with information is sent. The byte is biased at 96 (011000 00). The last bit is 1 for a detected crossing (011000 01)(=97)*/
+            if (byteBufferRead[0] == 97){
+                /*a crossing is detected*/
+                detection[0] = 1;
+                break;
+            }
+            /*The second-to-last bit is for a detected mine, which may come with a detected crossing (98 and 99)*/
+            if (byteBufferRead[0] == 98 || byteBufferRead[0] == 99){
+                /*a mine is detected*/
+                detection[1] = 1;
+                break;
+            }
+
+            /*temporary*/
+            scanf("%i",&byteBufferRead[0]);
+
+        }
+    }
 
     return 0;
+
+    CloseHandle(hSerial);
 }
