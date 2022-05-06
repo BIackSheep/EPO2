@@ -52,6 +52,7 @@ int Lee (int station1, int station2);
 void shortest_route(int input_len, int *input_list, int *stationinput);
 void maze_init (int list_len, int* block_list);
 void print_matrix (void);
+void current_crossing(int* stationinput);
 
 int maze[13][13];
 int *stations[12];
@@ -73,11 +74,11 @@ int main(int argc, char const *argv[]) {
     int *stationinput;   /*list with stations to visit, beginning at station 0*/
     int n;  /*temporary variable*/
 
-    puts("Enter number of blocked edges:\n");
+    puts("Enter number of blocked edges:");
     /*first input, gives input list length*/
     scanf("%i",&input_len);
 
-    puts("Enter the blocked edges:\n");
+    puts("Enter the blocked edges:");
     /*each edge has 3 array elements*/
     input_list = (int*)calloc(3*input_len, sizeof(int));
     stationinput = (int*)calloc(input_len, sizeof(int));
@@ -97,11 +98,11 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    puts("Enter the number of stations:\n");
+    puts("Enter the number of stations:");
     /*gives number of stations*/
     scanf("%i",&nr_of_stations);
 
-    puts("Enter the stations:\n");
+    puts("Enter the stations:");
     /*reads stations*/
     for(n=0; n<nr_of_stations; ++n) {
         scanf("%i",&stationinput[n]);
@@ -110,15 +111,35 @@ int main(int argc, char const *argv[]) {
     shortest_route(input_len, input_list, stationinput);
 
 
-    /*test reading detections from zigbee*/
-    //zigbee();
-    printf("Hello! Robot_Algorithm.c speaking: Zigbee send %i and %i\n",detection[0],detection[1]);
+    /*will have to quit when the last station is reached*/
+    n=0;
+    while (n!=5) {
 
-    /*test giving instructions to zigbee*/
-    instruction[0] = 2;
-    instruction[1] = 5;
-    zigbee();               /*function (called zigbee()) inside Zigbee.c is called*/
+        /*has to be reset after zigbee has been called*/
+        instruction[0] = 0;
+        instruction[1] = 0;
 
+        /*calls zigbee function, which will wait on detections*/
+        zigbee();
+
+        /*mine detected*/
+        if(detection[1]) {
+            detection[1] = 0;
+            puts("mine detected!");
+            /*new shortest route will be detected in a dedicated mine function*/
+        }
+
+        /*crossing detected*/
+        if (detection[0]) {
+            current_crossing(stationinput);
+        }
+
+        /*for the temporary while condition, to quit the loop*/
+        puts("enter 5 to quit the loop");
+        scanf("%i",&n);
+    }
+
+    /*clean up*/
     free(input_list);
     free(stationinput);
     return 0;
@@ -395,4 +416,12 @@ void print_matrix (void) {
         }
         putchar('\n');
     }
+}
+
+void current_crossing(int* stationinput) {
+    puts("current_crossing test");
+    instruction[0] = 1;
+    instruction[1] = 1;
+    /*calls zigbee to follow the instruction*/
+    zigbee();
 }
