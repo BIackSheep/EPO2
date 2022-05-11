@@ -63,7 +63,7 @@ int readByte(HANDLE hSerial, char *buffRead) {
     if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
     {
         fputs("error reading byte from input buffer \n",stderr);
-        //exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     printf("Byte read from read buffer is: %c \n", buffRead[0]);
     return(0);
@@ -81,7 +81,7 @@ int writeByte(HANDLE hSerial, char *buffWrite){
     if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
     {
         fputs("error writing byte to output buffer \n",stderr);
-        //exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     printf("Byte written to write buffer is: %c \n", buffWrite[0]);
 
@@ -110,9 +110,9 @@ int zigbee()
 
     if(hSerial == INVALID_HANDLE_VALUE){
         if(GetLastError()== ERROR_FILE_NOT_FOUND){
-            //serial port does not exist. Inform user.
+            /*serial port does not exist. Inform user.*/
             fputs(" serial port does not exist \n",stderr);
-            //exit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
         }
         //some other error occurred. Inform user.
         else {
@@ -168,12 +168,12 @@ int zigbee()
             }
 
             /*temporary*/
-            scanf("%i",&byteBufferRead[0]);
+            /*scanf("%i",&byteBufferRead[0]);*/
 
         }
     }
 
-    return 0;
-
     CloseHandle(hSerial);
+
+    return 0;
 }

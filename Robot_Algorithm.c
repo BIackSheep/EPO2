@@ -138,7 +138,7 @@ int main(int argc, char const *argv[]) {
 }
 
 void shortest_route(int input_len, int *input_list, int *stationinput) {
-    int n=0,m=0;
+    int n=0,m=0,p=0,q=0;
     int index = 0;
     int routelen = 0;
     /*pseudocode for more stations
@@ -252,6 +252,7 @@ int Lee (int station1, int station2) {
 
     }
 
+    /*implement a preference for straight on instead of making a turn?*/
     /*Trace back fase*/
     update_array[0] = stations[station1 - 1];      /*repurposing of update_array for current and visited location*/
     update_array_new[0] = update_array[0];              /*repurposing of update_array_new for updating update_array*/
