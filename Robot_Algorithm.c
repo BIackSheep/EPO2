@@ -56,6 +56,9 @@ void shortest_route(int*i,int *j,int n);
  }
  */
 
+
+/*are all allocated spaces freed?*/
+
 int maze[13][13];       /*is a matrix representation of all distinct locations on the real table*/
 int *stations[12];      /*Every index corresponds to that station, with address in maze as content*/
 int *crossings[5][5];   /*Every index corresponds to that crossing, with address in maze as content*/
@@ -149,7 +152,7 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-
+/*investigate working! also, use this name or is this confusing?*/
 void shortest_route(int*i,int *j,int n)
 {
     
