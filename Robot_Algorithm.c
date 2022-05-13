@@ -138,31 +138,12 @@ int main(int argc, char const *argv[]) {
 }
 
 void shortest_route(int input_len, int *input_list, int *stationinput) {
-    int n=0,m=0,p=0,q=0;
+    int m=0;
     int index = 0;
     int routelen = 0;
-    /*pseudocode for more stations
- try for all combinations of stations:
- lee() with station list of first 2 stations
- lee() with station list of station 2 and 3
- """ station 3 and 4         and so on
- concatenate routes
- search for shortest concatenation of routes
 
- is this too slow? C is pretty fast...
- */
-
- totalroute = (int*)calloc(100,sizeof(int));
-
-    /*calculates shortest route between every 2 stations*/
-     for(n=0;n<nr_of_stations-1;++n) {
-        maze_init(input_len, input_list);
-        routelen = Lee(stationinput[n],stationinput[n+1]);
-        /*adds the route between 2 stations to the total route*/
-        for(m=0;m<routelen;m++,index++) {
-            totalroute[index] = route[m];
-        }
-     }
+ /* is this too slow? C is pretty fast...*/
+ recursive_permute(stationinput+1,stationinput+1,nr_of_stations-1);
 
     /*print total route*/
     puts("\n");
@@ -175,6 +156,53 @@ void shortest_route(int input_len, int *input_list, int *stationinput) {
         }
     }
     puts("\n");
+}
+
+
+void routeconcat(int *num, int length)
+{
+    int i=0,n=0;
+    for (i = 0 ; i < length ; i++) {
+        printf("%d ", num[i]);
+    }
+    printf("\n");
+    totalroute = (int*)calloc(100,sizeof(int));
+
+    /*calculates shortest route between every 2 stations*/
+     for(n=0;n<nr_of_stations-1;++n) {
+        maze_init(input_len, input_list);
+        routelen = Lee(stationinput[n],stationinput[n+1]);
+        /*adds the route between 2 stations to the total route*/
+        for(m=0;m<routelen;m++,index++) {
+            totalroute[index] = route[m];
+        }
+     }
+}
+
+/*switches the number in the given address with the number of address+h*/
+int*permute(int*i,int h)
+{
+     int temp = *i;
+    *i = *(i+h);
+    *(i+h) = temp;
+return i+1;
+
+}
+
+void recursive_permute(int*i,int *j,int n)
+{
+    if((j-i)==n-1) {
+        routeconcat(i,n);
+        return;
+    }
+
+    int *tmparray=(int*)malloc(n*sizeof(int));
+    memcpy(tmparray,i,n*sizeof(int));
+    recursive_permute(tmparray,tmparray+(j-i+1),n);
+
+    for (int h=1;h<n-(j-i);h++) {
+        recursive_permute(tmparray,permute(tmparray+(j-i),h),n);
+    }
 }
 
 /*calculates shortest route between 2 stations, returns number of crossings*/
