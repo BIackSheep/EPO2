@@ -8,7 +8,7 @@ void print_matrix (void);
 //void current_crossing(int* stationinput);
 void routeconcat(int *num, int n);
 int*permute(int*i,int h);
-void shortest_route(int*i,int *j,int n);
+void shortest_route(int*new_comb,int *shifted_comb,int nr_stations);
 
 /*challenge a:
  The list with stations is given, no blocked edges.
@@ -117,6 +117,16 @@ int main(int argc, char const *argv[]) {
     
     shortest_route(stationinput+1,stationinput+1,nr_of_stations-1);
     
+    for(n=0;n<totalroutelen;n++) {
+        if(totalroute[n]>=10) {
+            printf("c%i ", totalroute[n]);
+        }
+        else {
+            printf("c0%i ", totalroute[n]);
+        }
+    }
+    puts("\n");
+    
     /*will have to quit when the last station is reached*//*
     n=0;
     while (n!=5) {
@@ -152,28 +162,38 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
-/*investigate working! also, use this name or is this confusing?*/
-void shortest_route(int*i,int *j,int n)
+/*investigate working (this is recursive permutating function)! also, use this name or is this confusing?*/
+void shortest_route(int*new_comb,int *shifted_comb,int nr_stations)
 {
-    
-    if((j-i)==n-1) {
-        routeconcat(i,n);
+    /*calculates the shortest route for a unique combinations of stations, when all possible
+     permutations for a cycle have been considered*/
+    if((shifted_comb-new_comb)==nr_stations-1) {
+        routeconcat(new_comb,nr_stations);
         return;
     }
     
-    int *tmparray=(int*)calloc(n,sizeof(int));
-    memcpy(tmparray,i,n*sizeof(int));
-    shortest_route(tmparray,tmparray+(j-i+1),n);
+    /*creates a new tmparray for every instance of this recursive function*/
+    int *tmparray=(int*)calloc(nr_stations,sizeof(int));
     
-    for (int h=1;h<n-(j-i);h++) {
-        shortest_route(tmparray,permute(tmparray+(j-i),h),n);
+    /*copies the new combinations as it stands now to the tmparray*/
+    memcpy(tmparray,new_comb,nr_stations*sizeof(int));
+    
+    /*calls the recursive functions, now with a shifted tmparray to be used as shifted_comb*/
+    shortest_route(tmparray,tmparray+(shifted_comb-new_comb+1),nr_stations);
+    
+    /*To this loop will be returned after a calculation with routeconcat has taken place in
+     a higher instance of the recursive function. This loop will call the recursive function with
+     tmparray that has 2 of its numbers switched*/
+    for (int h=1;h<nr_stations-(shifted_comb-new_comb);h++) {
+        shortest_route(tmparray,permute(tmparray+(shifted_comb-new_comb),h),nr_stations);
     }
     
     /*free space*/
     free(tmparray);
 }
 
-/*switches the number in the given address with the number of address+h*/
+/*switches the number in the given address with the number of address+h,
+ returns given adress +1*/
 int*permute(int*i,int h)
 {
     int temp = *i;
@@ -210,14 +230,7 @@ void routeconcat(int *list, int length)
         }
     }
     
-    /*if the calculated route is shorter than the already existing one, it is replaced*/
-    if (temptotalroutelen<totalroutelen||totalroutelen==0) {
-        totalroute = temptotalroute;
-        totalroutelen = temptotalroutelen;
-    }
-    
-    /*print temporary total route*/
-    puts("\n");
+    /*print temporary total route*//*
     for(m=0;m<index;m++) {
         if(temptotalroute[m]>=10) {
             printf("c%i ", temptotalroute[m]);
@@ -226,11 +239,20 @@ void routeconcat(int *list, int length)
             printf("c0%i ", temptotalroute[m]);
         }
     }
-    puts("\n");
+    puts("\n");*/
     
-    /*print total route*/
-    puts("\n");
-    for(m=0;m<index;m++) {
+    /*if the calculated route is shorter than the already existing one, it is replaced*/
+    if ((temptotalroutelen<totalroutelen)||totalroutelen==0) {
+        totalroute = temptotalroute;
+        totalroutelen = temptotalroutelen;
+    }
+    else {
+        /*frees the space for temptotalroute otherwise*/
+        free(temptotalroute);
+    }
+    
+    /*print total route*//*
+    for(m=0;m<totalroutelen;m++) {
         if(totalroute[m]>=10) {
             printf("c%i ", totalroute[m]);
         }
@@ -238,10 +260,7 @@ void routeconcat(int *list, int length)
             printf("c0%i ", totalroute[m]);
         }
     }
-    puts("\n");
-    
-    
-    free(temptotalroute);
+    puts("\n");*/
 }
 
 /*calculates shortest route between 2 stations, returns number of crossings*/
@@ -250,10 +269,6 @@ int Lee (int station1, int station2) {
     int n=0;        /*is used for indexing the route array*/
     int m=0;        /*keeps track of index in update_array*/
     int p=0;        /*keeps track of index in update_array_new*/
-    
-    //test
-    printf("station1 : %i\n",station1);
-    printf("station2 : %i\n",station2);
     
     update_array = (int**)calloc(30,sizeof(int*)); /*what size? 20 is maximum I found, 30 is for security*/
     update_array_new = (int**)calloc(30,sizeof(int*));
