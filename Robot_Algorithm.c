@@ -64,6 +64,8 @@ int nr_of_stations;     /*contains the number of stations given as input*/
 int input_len;          /*contains the number of blocked edges given as input*/
 int *input_list;        /*list with blocked edges*/
 int *stationinput;      /*list with stations to visit, beginning at station 0*/
+int direction;          /*keeps track of the current direction of the robot*/
+int current_index;      /*keeps track of the current index in the totalroute array*/
 
 /*external variable*/
 int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
@@ -72,6 +74,9 @@ int detection[2] = {0,0};                   //xcode
 int main(int argc, char const *argv[]) {
     int n;  /*temporary variable*/
 
+        /************/
+        /*input part*/
+        /************/
     puts("Enter number of blocked edges:");
     /*first input, gives input list length*/
     scanf("%i",&input_len);
@@ -106,11 +111,16 @@ int main(int argc, char const *argv[]) {
         scanf("%i",&stationinput[n]);
     }
 
+        /******************/
+        /*calculation part*/
+        /******************/
     /*allocates enough space for the total route*/
     totalroute = (int*)calloc(100,sizeof(int));
-
+    
+    /*starts the search for the shortest route*/
     shortest_route(stationinput+1,stationinput+1,nr_of_stations-1);
-
+    
+    /*prints shortest route*/
     for(n=0;n<totalroutelen;n++) {
         if(totalroute[n]>=10) {
             printf("c%i ", totalroute[n]);
@@ -120,10 +130,27 @@ int main(int argc, char const *argv[]) {
         }
     }
     puts("\n");
+    
+        /******************/
+        /*instruction part*/
+        /******************/
+    /*initialisation of the location of the robot*/
+    current_index = 0;
+    if (stationinput[0] == 1 || stationinput[0] == 2 || stationinput[0] == 3){
+        direction = 1; //direction set towards the north
+    }
+    else if (stationinput[0] == 10 || stationinput[0] == 11 || stationinput[0] == 12){
+        direction = 2; //direction set towards the east
+    }
+    else if (stationinput[0] == 9 || stationinput[0] == 8 || stationinput[0] == 7){
+        direction = 3; //direction set towards the south
+    }
+    else if(stationinput[0] == 6 || stationinput[0] == 5 || stationinput[0] == 4){
+        direction = 4; //direction set towards the west
+    }
 
-    /*will have to quit when the last station is reached*/
-    n=0;
-    while (n!=5) {
+    /*will have to quit when the last station is reached (n is thus temporary)*/
+    while (detection[0]!=5||current_index>=totalroutelen) {
 
         /*has to be reset after zigbee has been called*/
         instruction[0] = 0;
@@ -132,7 +159,6 @@ int main(int argc, char const *argv[]) {
         /*calls zigbee function, which will wait on detections*/
         //zigbee();                                             xcode
         
-
         /*mine detected*/
         if(detection[1]) {
             detection[1] = 0;
@@ -146,8 +172,8 @@ int main(int argc, char const *argv[]) {
         }
         
         /*for the temporary while condition, to quit the loop*/
-        puts("enter 5 to quit the loop");
-        scanf("%i",&n);
+        puts("enter 5 to quit the loop, or 1 for a crossing detection simulation");
+        scanf("%i",&detection[0]);
     }
 
     /*clean up*/
@@ -155,6 +181,143 @@ int main(int argc, char const *argv[]) {
     free(stationinput);
     free(totalroute);
     return 0;
+}
+
+void current_crossing(int* stationinput) {
+    /*temporary*/
+    printf("current index: %i\ncurrent direction: %i\ncurrent case: %i\n", current_index, direction, totalroute[current_index+1]-totalroute[current_index]);
+    
+    /*accounts for the mine spots that are also detected as crossings*/
+    if (current_index % 2 == 0) {
+        
+        /*facing north*/
+        if (direction == 1) {
+            switch (totalroute[current_index+1]-totalroute[current_index]) {
+                /*turn right*/
+                case 1:
+                    instruction[0] = 0;
+                    instruction[1] = 1;
+                    direction = 2;
+                    break;
+                /*turn left*/
+                case -1:
+                    instruction[0] = 1;
+                    instruction[1] = 0;
+                    direction = 4;
+                    break;
+                /*straight on*/
+                case -10:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 1;
+                    break;
+                /*straight on, but a station will be reached*/
+                case 0:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    /*because the robot will drive backwards after reaching station,
+                     until it is back in front of the crossing again*/
+                    direction = 1;
+                    break;
+            }
+        }
+        
+        /*facing east*/
+        else if (direction == 2) {
+            switch (totalroute[current_index+1]-totalroute[current_index]) {
+                /*straight on*/
+                case 1:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 2;
+                    break;
+                /*turn left*/
+                case 10:
+                    instruction[0] = 1;
+                    instruction[1] = 0;
+                    direction = 1;
+                    break;
+                /*turn right*/
+                case -10:
+                    instruction[0] = 0;
+                    instruction[1] = 1;
+                    direction = 3;
+                    break;
+                /*station*/
+                case 0:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 2;
+                    break;
+            }
+        }
+        
+        /*facing south*/
+        else if (direction == 3) {
+            switch (totalroute[current_index+1]-totalroute[current_index]) {
+                /*turn left*/
+                case +1:
+                    instruction[0] = 1;
+                    instruction[1] = 0;
+                    direction = 2;
+                    break;
+                /*straight on*/
+                case +10:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 3;
+                    break;
+                /*turn right*/
+                case -1:
+                    instruction[0] = 0;
+                    instruction[1] = 1;
+                    direction = 4;
+                    break;
+                /*station*/
+                case 0:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 3;
+                    break;
+            }
+        }
+        
+        /*facing west*/
+        else if (direction == 4) {
+            switch (totalroute[current_index+1]-totalroute[current_index]) {
+                /*straight on*/
+                case -1:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 4;
+                    break;
+                /*turn left*/
+                case +10:
+                    instruction[0] = 1;
+                    instruction[1] = 0;
+                    direction = 3;
+                    break;
+                /*turn right*/
+                case -10:
+                    instruction[0] = 0;
+                    instruction[1] = 1;
+                    direction = 1;
+                    break;
+                /*station*/
+                case 0:
+                    instruction[0] = 1;
+                    instruction[1] = 1;
+                    direction = 4;
+                    break;
+            }
+        }
+        
+        /*calls zigbee to follow the instruction*/
+        //zigbee();                                 xcode
+    }
+    
+    /*updates the current location in the total route array*/
+    current_index += 1;
 }
 
 /*recursive permutating function, is also called first to start calculating shortest route,
@@ -487,12 +650,4 @@ void print_matrix (void) {
         }
         putchar('\n');
     }
-}
-
-void current_crossing(int* stationinput) {
-    puts("current_crossing test");
-    instruction[0] = 1;
-    instruction[1] = 1;
-    /*calls zigbee to follow the instruction*/
-    //zigbee();                                             xcode
 }
