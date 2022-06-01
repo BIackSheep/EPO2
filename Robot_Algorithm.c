@@ -66,6 +66,7 @@ int *input_list;        /*list with blocked edges*/
 int *stationinput;      /*list with stations to visit, beginning at station 0*/
 int direction;          /*keeps track of the current direction of the robot*/
 int current_index;      /*keeps track of the current index in the totalroute array*/
+int passed_crossings;   /*keeps track of the number of crossings (or mines) that have been passed*/
 
 /*external variable*/
 int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
@@ -136,6 +137,8 @@ int main(int argc, char const *argv[]) {
         /******************/
     /*initialisation of the location of the robot*/
     current_index = 0;
+    passed_crossings = 0;
+    
     if (stationinput[0] == 1 || stationinput[0] == 2 || stationinput[0] == 3){
         direction = 1; //direction set towards the north
     }
@@ -149,8 +152,11 @@ int main(int argc, char const *argv[]) {
         direction = 4; //direction set towards the west
     }
 
+    /*temp*/
+    printf("totalroutelen: %i\n",totalroutelen);
+    
     /*will have to quit when the last station is reached (n is thus temporary)*/
-    while (detection[0]!=5||current_index>=totalroutelen) {
+    while (detection[0]!=5&&current_index<totalroutelen-1) {
 
         /*has to be reset after zigbee has been called*/
         instruction[0] = 0;
@@ -188,8 +194,7 @@ void current_crossing(int* stationinput) {
     printf("current index: %i\ncurrent direction: %i\ncurrent case: %i\n", current_index, direction, totalroute[current_index+1]-totalroute[current_index]);
     
     /*accounts for the mine spots that are also detected as crossings*/
-    if (current_index % 2 == 0) {
-        
+    if (passed_crossings % 2 == 0) {
         /*facing north*/
         if (direction == 1) {
             switch (totalroute[current_index+1]-totalroute[current_index]) {
@@ -212,7 +217,8 @@ void current_crossing(int* stationinput) {
                     direction = 1;
                     break;
                 /*straight on, but a station will be reached*/
-                case 0:
+                case 0:                             //does not work when stations is on the side!!
+                    //case switch with totalroute[current_index]%10==4 for right and %10==0 for left
                     instruction[0] = 1;
                     instruction[1] = 1;
                     /*because the robot will drive backwards after reaching station,
@@ -314,10 +320,12 @@ void current_crossing(int* stationinput) {
         
         /*calls zigbee to follow the instruction*/
         //zigbee();                                 xcode
-    }
     
-    /*updates the current location in the total route array*/
-    current_index += 1;
+        /*updates the current location in the total route array*/
+        ++current_index;
+    }
+    /*updates the number of crossings that have been passed*/
+    ++passed_crossings;
 }
 
 /*recursive permutating function, is also called first to start calculating shortest route,
