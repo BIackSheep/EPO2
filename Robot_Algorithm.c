@@ -151,11 +151,8 @@ int main(int argc, char const *argv[]) {
         direction = 4; //direction set towards the west
     }
 
-    /*temp*/
-    printf("totalroutelen: %i\n",totalroutelen);
-
-    /*will have to quit when the last station is reached (n is thus temporary)*/
-    while (detection[0]!=5&&current_index<totalroutelen-1) {
+    /*will have to quit when the last station is reached (5 is thus temporary)*/
+    while (detection[0]!=5&&current_index<totalroutelen) {
 
         /*has to be reset after zigbee has been called*/
         instruction[0] = 0;
@@ -177,8 +174,8 @@ int main(int argc, char const *argv[]) {
         }
 
         /*for the temporary while condition, to quit the loop*/
-        puts("enter 5 to quit the loop, or 1 for a crossing detection simulation");
-        scanf("%i",&detection[0]);
+        /*puts("enter 5 to quit the loop, or 1 for a crossing detection simulation");
+        scanf("%i",&detection[0]);*/
     }
 
     /*clean up*/
@@ -189,14 +186,22 @@ int main(int argc, char const *argv[]) {
 }
 
 void current_crossing(int* stationinput) {
-    /*temporary*/
-    printf("current index: %i\ncurrent direction: %i\ncurrent case: %i\n", current_index, direction, totalroute[current_index+1]-totalroute[current_index]);
+    /*determines the direction the robot will have to take for the next station*/
+    int case_argument = totalroute[current_index+1]-totalroute[current_index];
+    /*for the last crossing*/
+    if(current_index==totalroutelen-1) {
+        case_argument = 0;
+    }
+
+    /*prints some information*/
+    /*printf("current index: %i\ncurrent direction: %i\ncurrent case: %i\n", current_index, direction, totalroute[current_index+1]-totalroute[current_index]);*/
 
     /*accounts for the mine spots that are also detected as crossings*/
     if (passed_crossings % 2 == 0) {
         /*facing north*/
         if (direction == 1) {
-            switch (totalroute[current_index+1]-totalroute[current_index]) {
+            /*determines the direction to take and the new orientation*/
+            switch (case_argument) {
                 /*turn right*/
                 case 1:
                     instruction[0] = 0;
@@ -215,21 +220,32 @@ void current_crossing(int* stationinput) {
                     instruction[1] = 1;
                     direction = 1;
                     break;
-                /*straight on, but a station will be reached*/
-                case 0:                             //does not work when stations is on the side!!
-                    //case switch with totalroute[current_index]%10==4 for right and %10==0 for left
-                    instruction[0] = 1;
-                    instruction[1] = 1;
-                    /*because the robot will drive backwards after reaching station,
-                     until it is back in front of the crossing again*/
-                    direction = 1;
+                /*when a station must be visited*/
+                case 0:
+                    /*turn right*/
+                    if (totalroute[current_index] %10 == 4){
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                        direction = 4;
+                    }
+                    /*turn left*/
+                    else if (totalroute[current_index] %10 == 0){
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                        direction = 2;
+                    }
+                    /*straight on*/
+                    else if (totalroute[current_index] < 4){
+                        instruction[0] = 1;
+                        instruction[1] = 1;
+                        direction = 3;
+                    }
                     break;
             }
         }
-
         /*facing east*/
         else if (direction == 2) {
-            switch (totalroute[current_index+1]-totalroute[current_index]) {
+            switch (case_argument) {
                 /*straight on*/
                 case 1:
                     instruction[0] = 1;
@@ -237,29 +253,43 @@ void current_crossing(int* stationinput) {
                     direction = 2;
                     break;
                 /*turn left*/
-                case 10:
+                case -10:
                     instruction[0] = 1;
                     instruction[1] = 0;
                     direction = 1;
                     break;
                 /*turn right*/
-                case -10:
+                case 10:
                     instruction[0] = 0;
                     instruction[1] = 1;
                     direction = 3;
                     break;
                 /*station*/
                 case 0:
-                    instruction[0] = 1;
-                    instruction[1] = 1;
-                    direction = 2;
+                    /*turn right*/
+                    if (totalroute[current_index] > 40){
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                        direction = 1;
+                    }
+                    /*turn left*/
+                    else if (totalroute[current_index] < 4){
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                        direction = 3;
+                    }
+                    /*straight on*/
+                    else if (totalroute[current_index] == 14 || totalroute[current_index] == 24 || totalroute[current_index] == 34){
+                        instruction[0] = 1;
+                        instruction[1] = 1;
+                        direction = 4;
+                    }
                     break;
             }
         }
-
         /*facing south*/
         else if (direction == 3) {
-            switch (totalroute[current_index+1]-totalroute[current_index]) {
+            switch (case_argument) {
                 /*turn left*/
                 case +1:
                     instruction[0] = 1;
@@ -280,16 +310,30 @@ void current_crossing(int* stationinput) {
                     break;
                 /*station*/
                 case 0:
-                    instruction[0] = 1;
-                    instruction[1] = 1;
-                    direction = 3;
+                    /*turn left*/
+                    if (totalroute[current_index] %10 == 4){
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                        direction = 4;
+                    }
+                    /*turn right*/
+                    else if (totalroute[current_index] %10 == 0){
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                        direction = 2;
+                    }
+                    /*straight on mate*/
+                    else if (totalroute[current_index] > 40){
+                        instruction[0] = 1;
+                        instruction[1] = 1;
+                        direction = 1;
+                    }
                     break;
             }
         }
-
         /*facing west*/
         else if (direction == 4) {
-            switch (totalroute[current_index+1]-totalroute[current_index]) {
+            switch (case_argument) {
                 /*straight on*/
                 case -1:
                     instruction[0] = 1;
@@ -310,9 +354,24 @@ void current_crossing(int* stationinput) {
                     break;
                 /*station*/
                 case 0:
-                    instruction[0] = 1;
-                    instruction[1] = 1;
-                    direction = 4;
+                    /*turn right*/
+                    if (totalroute[current_index] < 4){
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                        direction = 4;
+                    }
+                    /*straight on*/
+                    else if (totalroute[current_index] %10 == 0){
+                        instruction[0] = 1;
+                        instruction[1] = 1;
+                        direction = 2;
+                    }
+                    /*turn left*/
+                    else if (totalroute[current_index] > 40){
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                        direction = 1;
+                    }
                     break;
             }
         }
@@ -334,7 +393,7 @@ void shortest_route(int*new_comb,int *shifted_comb,int nr_stations)
     /*calculates the shortest route for a unique combinations of stations, when all possible
      permutations for a cycle have been considered*/
     if((shifted_comb-new_comb)==nr_stations-1) {
-        routeconcat(new_comb,nr_stations);
+        routeconcat(new_comb);
         return;
     }
 
@@ -369,26 +428,28 @@ int*permute(int*i,int h)
 
 }
 
-void routeconcat(int *list, int length)
+void routeconcat(int *list)
 {
     int m=0,n=0;
     int index = 0;
     int routelen = 0;
     int* temptotalroute;
     int temptotalroutelen = 0;
-
     /*allocates enough space for the total route*/
     temptotalroute = (int*)calloc(100,sizeof(int));
 
     /*Because list does not contain the first station, because the robot always starts there*/
-    list[-1] = stationinput[0];
-
+    for(n=nr_of_stations-1;n>0;n--) {
+        list[n] = list[n-1];
+    }
+    list[0] = stationinput[0];
     /*calculates length of shortest route between every 2 stations*/
     for(n=0;n<nr_of_stations-1;++n) {
         maze_init(input_len, input_list);
-        routelen = Lee(list[n-1],list[n]);
+        puts("test3"); //the errors are thrown between test 3 and 4
+        routelen = Lee(list[n],list[n+1]);
+        puts("test4");
         temptotalroutelen += routelen;
-
         /*adds the route between 2 stations to the temporary total route*/
         for(m=0;m<routelen;m++,index++) {
             /*route has been set by Lee()*/
@@ -427,6 +488,13 @@ void routeconcat(int *list, int length)
         }
     }
     puts("\n");*/
+
+    /*Because list does contain the first station,
+    but this is not wanted for the function shortest_route*/
+    for(n=0;n<nr_of_stations;n++) {
+        list[n] = list[n+1];
+    }
+
 }
 
 /*calculates shortest route between 2 stations, returns number of crossings*/
