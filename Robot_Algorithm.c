@@ -67,6 +67,8 @@ int *stationinput;      /*list with stations to visit, beginning at station 0*/
 int direction;          /*keeps track of the current direction of the robot*/
 int current_index;      /*keeps track of the current index in the totalroute array*/
 int passed_crossings;   /*keeps track of the number of crossings (or mines) that have been passed*/
+int passed_stations;    /*keeps track of stations that have been visited (minus the start station)*/
+int *optimalstations;   /*is a list of the stations in the order corresponding to totalroute*/
 
 /*external variable*/
 int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
@@ -85,7 +87,6 @@ int main(int argc, char const *argv[]) {
     puts("Enter the blocked edges:");
     /*each edge has 3 array elements*/
     input_list = (int*)calloc(3*input_len, sizeof(int));
-    stationinput = (int*)calloc(input_len, sizeof(int));
 
     /*reads input_list*/
     for(n=0; n<(3*input_len); ++n) {
@@ -105,6 +106,9 @@ int main(int argc, char const *argv[]) {
     puts("Enter the number of stations:");
     /*gives number of stations*/
     scanf("%i",&nr_of_stations);
+    
+    stationinput = (int*)calloc(nr_of_stations, sizeof(int));
+    optimalstations = (int*)calloc(nr_of_stations, sizeof(int));
 
     puts("Enter the stations:");
     /*reads stations*/
@@ -138,6 +142,7 @@ int main(int argc, char const *argv[]) {
     /*initialisation of the location of the robot*/
     current_index = 0;
     passed_crossings = 0;
+    passed_stations = 0;
 
     if (stationinput[0] == 1 || stationinput[0] == 2 || stationinput[0] == 3){
         direction = 1; //direction set towards the north
@@ -164,12 +169,10 @@ int main(int argc, char const *argv[]) {
 
         /*mine detected*/
         if(detection[1]) {
-            detection[1] = 0;
-            puts("mine detected!");
-            /*new shortest route will be detected in a dedicated mine function*/
+            mine_detected();
         }
 
-        /*crossing detected*/
+        /*crossing detected (is not set of for a mine)*/
         if (detection[0]) {
             current_crossing(stationinput);
         }
@@ -184,8 +187,43 @@ int main(int argc, char const *argv[]) {
     /*clean up*/
     free(input_list);
     free(stationinput);
+    free(optimalstations);
     free(totalroute);
     return 0;
+}
+
+void mine_detected() {
+    int n=0;
+    
+    puts("mine detected!");
+    
+    detection[1] = 0;
+    
+    /*resetting the stationinput, to allow a new "input"*/
+    for(n=0;n<nr_of_stations;n++) {
+        stationinput[n] = 0;
+    }
+    
+    /*special code for the Lee function to interpret as: start from a crossing, not a station*/
+    stationinput[0]=13;
+    
+    for(n=1;n+passed_stations<nr_of_stations;++n) {
+        stationinput[n] = optimalstations[n+passed_stations];
+    }
+    
+    /*resetting the optimal stations array, to allow a shorter array to be filled in*/
+    for(n=0;n<nr_of_stations;n++) {
+        optimalstations[n] = 0;
+    }
+    
+    /*to tell that there are less stations to be visited*/
+    nr_of_stations -= passed_stations;
+    
+    /*to allow new counting, for this function to work again*/
+    passed_stations = 0;
+    
+    /*starts the search for the shortest route*/
+    shortest_route(stationinput+1,stationinput+1,nr_of_stations-1);
 }
 
 void current_crossing(int* stationinput) {
@@ -245,6 +283,9 @@ void current_crossing(int* stationinput) {
                     }
                     /*because the same crossing will be passed twice*/
                     --passed_crossings;
+                    
+                    /*will be important for calculating new routes after detecting a mine*/
+                    ++passed_stations;
                     break;
             }
         }
@@ -290,6 +331,7 @@ void current_crossing(int* stationinput) {
                         direction = 4;
                     }
                     --passed_crossings;
+                    ++passed_stations;
                     break;
             }
         }
@@ -335,6 +377,7 @@ void current_crossing(int* stationinput) {
                         direction = 1;
                     }
                     --passed_crossings;
+                    ++passed_stations;
                     break;
             }
         }
@@ -380,6 +423,7 @@ void current_crossing(int* stationinput) {
                         direction = 1;
                     }
                     --passed_crossings;
+                    ++passed_stations;
                     break;
             }
         }
@@ -481,6 +525,12 @@ void routeconcat(int *list)
     if ((temptotalroutelen<totalroutelen)||totalroutelen==0) {
         totalroute = temptotalroute;
         totalroutelen = temptotalroutelen;
+        
+        /*will be needed when a new route has to be calculated*/
+        for(n=0;n<nr_of_stations;n++) {
+            optimalstations[n] = list[n];
+        }
+        
     }
     else {
         /*frees the space for temptotalroute otherwise*/
@@ -499,7 +549,7 @@ void routeconcat(int *list)
     puts("\n");*/
 
     /*Because list does contain the first station,
-    but this is not wanted for the function shortest_route*/
+    this is not wanted for the function shortest_route*/
     for(n=0;n<nr_of_stations;n++) {
         list[n] = list[n+1];
     }
