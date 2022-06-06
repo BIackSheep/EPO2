@@ -38,11 +38,7 @@ int challengec;         /*is true if challenge c is being done*/
 
 /*external variable*/
 int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
-<<<<<<< Updated upstream
-int detection[2] = {0,0};       //xcode
-=======
 int detection[2] = {0,0};   //xcode
->>>>>>> Stashed changes
 
 int main(int argc, char const *argv[]) {
     int n;  /*temporary variable*/
@@ -155,11 +151,7 @@ int main(int argc, char const *argv[]) {
         instruction[1] = 0;
 
         /*calls zigbee function, which will wait on detections*/
-<<<<<<< Updated upstream
-        //zigbee();             xcode
-=======
         //zigbee();     xcode
->>>>>>> Stashed changes
 
         /*mine detected*/
         if(detection[1]) {
@@ -485,11 +477,7 @@ void current_crossing(int* stationinput) {
         }
 
         /*calls zigbee to follow the instruction*/
-<<<<<<< Updated upstream
-        //zigbee();         xcode
-=======
         //zigbee();     xcode
->>>>>>> Stashed changes
 
         /*updates the current location in the total route array*/
         ++current_index;
@@ -499,7 +487,7 @@ void current_crossing(int* stationinput) {
     else{
         instruction[0] = 1;
         instruction[1] = 1;
-        //zigbee();     xcode
+        //zigbee();      xcode
     }
     
     /*updates the number of crossings that have been passed*/
@@ -621,7 +609,7 @@ void routeconcat(int *list)
         free(temptotalroute);
     }
 
-    /*print total route*//*
+    /*print total route*/ /*
     for(m=0;m<totalroutelen;m++) {
         if(totalroute[m]>=10) {
             printf("c%i ", totalroute[m]);
@@ -824,7 +812,7 @@ int Lee (int station1, int station2) {
         }
     }
 
-    /*print route*//*
+    /*print route*/ /*
     print_matrix();
     puts("\n");
     for(n=0;n<(count-3)/2;n++) {
