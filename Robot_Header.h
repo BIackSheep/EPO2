@@ -16,6 +16,7 @@ void current_crossing(int* stationinput);
 void routeconcat(int *list);
 int *permute(int*i,int h);
 void recursive_permute(int*i,int *j,int n);
+void explore(void);
 
 void initSio(HANDLE hSerial);
 int readByte(HANDLE hSerial, char *buffRead);

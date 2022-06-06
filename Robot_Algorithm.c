@@ -130,7 +130,11 @@ int main(int argc, char const *argv[]) {
         
         /*calls zigbee function, which will wait on detections*/
         zigbee();
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
         /*mine detected*/
         if(detection[1]) {
             detection[1] = 0;
@@ -355,7 +359,11 @@ void current_crossing(int* stationinput) {
         
         /*calls zigbee to follow the instruction*/
         zigbee();
+<<<<<<< Updated upstream
         
+=======
+
+>>>>>>> Stashed changes
         /*updates the current location in the total route array*/
         ++current_index;
     }
