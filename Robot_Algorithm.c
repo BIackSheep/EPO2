@@ -481,6 +481,14 @@ void current_crossing(int* stationinput) {
         /*updates the current location in the total route array*/
         ++current_index;
     }
+ 
+    /*gives instruction when on an empty mine spot*/
+    else{
+        instruction[0] = 1;
+        instruction[1] = 1;
+        zigbee();
+    }
+ 
     /*updates the number of crossings that have been passed*/
     ++passed_crossings;
 }
