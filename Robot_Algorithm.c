@@ -10,16 +10,13 @@
  The list with stations is given. Some part has to keep track of the position of the robot.
  When a mine is detected, a blocked edge must be given to the algorithm together with the already
  existing blocked edges and stations, with the starting station at the current location (which isn't
- a classical station but an edge). Then the journey can continue.
+ a classical station but an edge). Then the journey can continue. ((should be ready now (06-06-2022))
 
  challenge c:
  Exploration:
  The robot has to traverse the entire field (except station entries) in an as short as possible timespan. Everytime a mine is encountered it has to be entered again in the algorithm (but for the algorithm stations have to be given so it will have to be changed??)
  Treasure hunt: a new mine is placed, which has to be found in an as short as possible time.
  */
-
-
-/*are all allocated spaces freed?*/
 
 int maze[13][13];       /*is a matrix representation of all distinct locations on the real table*/
 int *stations[12];      /*Every index corresponds to that station, with address in maze as content*/
@@ -36,7 +33,8 @@ int current_index;      /*keeps track of the current index in the totalroute arr
 int passed_crossings;   /*keeps track of the number of crossings (or mines) that have been passed*/
 int passed_stations;    /*keeps track nr of stations that have been visited (minus the start station)*/
 int *optimalstations;   /*is a list of the stations in the order corresponding to totalroute*/
-int *next_crossing;
+int *next_crossing;     /*keeps track of next station the robot visits, according to old totalroute*/
+int challengec;         /*is true if challenge c is being done*/
 
 /*external variable*/
 int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
@@ -74,33 +72,40 @@ int main(int argc, char const *argv[]) {
         }
     }
 
+    puts("Enter 1 if this is challenge c, otherwise enter 0");
+    scanf("%i",&challengec);
+    /*start the first part of challenge c*/
+    explore();
+    
     puts("Enter the number of stations:");
     /*gives number of stations*/
     scanf("%i",&nr_of_stations);
     
+    /*contains a list of all stations in the order given at input*/
     stationinput = (int*)calloc(nr_of_stations, sizeof(int));
     if(!stationinput) {
         fputs("Could not allocate that space!",stderr);
         exit(2);
     }
+    /*will contain a list of all stations in order of the optimal route*/
     optimalstations = (int*)calloc(nr_of_stations, sizeof(int));
     if(!optimalstations) {
         fputs("Could not allocate that space!",stderr);
         exit(3);
     }
 
-    puts("Enter the stations:");
+    puts("Enter the stations, the first one is where you start:");
     /*reads stations*/
     for(n=0; n<nr_of_stations; ++n) {
         scanf("%i",&stationinput[n]);
     }
 
     /*allocates enough space for the total route*/
-    totalroute = (int*)calloc(100,sizeof(int));
+    /*totalroute = (int*)calloc(100,sizeof(int));
     if(!totalroute) {
         fputs("Could not allocate that space!",stderr);
         exit(4);
-    }
+    }*/ /*not needed? totalroute is only given adresses in temptotalroute, which is allocated*/
 
     /*starts the search for the shortest route*/
     shortest_route(stationinput+1,stationinput+1,nr_of_stations-1);
@@ -121,17 +126,21 @@ int main(int argc, char const *argv[]) {
     passed_crossings = 0;
     passed_stations = 0;
 
+    /*initial direction set towards the north*/
     if (stationinput[0] == 1 || stationinput[0] == 2 || stationinput[0] == 3){
-        direction = 1; //direction set towards the north
+        direction = 1;
     }
+    /*initial direction set towards the east*/
     else if (stationinput[0] == 10 || stationinput[0] == 11 || stationinput[0] == 12){
-        direction = 2; //direction set towards the east
+        direction = 2;
     }
+    /*initial direction set towards the south*/
     else if (stationinput[0] == 9 || stationinput[0] == 8 || stationinput[0] == 7){
-        direction = 3; //direction set towards the south
+        direction = 3;
     }
+    /*initial direction set towards the west*/
     else if(stationinput[0] == 6 || stationinput[0] == 5 || stationinput[0] == 4){
-        direction = 4; //direction set towards the west
+        direction = 4;
     }
 
     /*will have to quit when the last station is reached (5 is thus temporary)*/
@@ -167,8 +176,14 @@ int main(int argc, char const *argv[]) {
     free(input_list);
     free(stationinput);
     free(optimalstations);
+    /*following 2 may give issues? use if statement??*/
     free(totalroute);
+    free(route);
     return 0;
+}
+
+void explore() {
+    puts("Explore!");
 }
 
 void mine_detected() {
@@ -176,6 +191,7 @@ void mine_detected() {
     
     puts("mine detected!");
     
+    /*resetting the mine detection*/
     detection[1] = 0;
     
     /*resetting the stationinput, to allow a new "input"*/
@@ -570,6 +586,7 @@ void routeconcat(int *list)
 
     /*if the calculated route is shorter than the already existing one, it is replaced*/
     if ((temptotalroutelen<totalroutelen)||totalroutelen==0) {
+        free(totalroute);
         totalroute = temptotalroute;
         totalroutelen = temptotalroutelen;
         
@@ -757,6 +774,10 @@ int Lee (int station1, int station2) {
 
     }
 
+    /*freeing the space if another instance of lee allocated space for route*/
+    if(route) {
+        free(route);
+    }
     /*building the route array*/
     route = (int*)calloc(count,sizeof(int));
     if(!route) {
@@ -800,7 +821,6 @@ int Lee (int station1, int station2) {
     /*free allocated memory*/
     free(update_array);
     free(update_array_new);
-    //free(route)                               make this possible, route as return ipv global?
 
     return (count-3)/2;
 }
