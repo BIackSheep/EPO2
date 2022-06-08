@@ -74,7 +74,9 @@ int main(int argc, char const *argv[]) {
     puts("Enter 1 if this is challenge c, otherwise enter 0");
     scanf("%i",&challengec);
     /*start the first part of challenge c*/
-    explore();
+    if(challengec) {
+        explore();
+    }
     
     puts("Enter the number of stations:");
     /*gives number of stations*/
@@ -150,7 +152,7 @@ int main(int argc, char const *argv[]) {
         instruction[1] = 0;
 
         /*calls zigbee function, which will wait on detections*/
-        zigbee();
+        zigbee();   
 
         /*mine detected*/
         if(detection[1]) {
@@ -182,7 +184,79 @@ int main(int argc, char const *argv[]) {
 }
 
 void explore() {
-    puts("Explore!");
+    int n=0, m=0, p=0;
+    
+    /*contains a list of all stations in the order given below*/
+    stationinput = (int*)calloc(49, sizeof(int));
+    if(!stationinput) {
+        fputs("Could not allocate that space!",stderr);
+        exit(2);
+    }
+    for(n=0;n<5;n++) {
+        for(m=0;m<5;m++) {
+            stationinput[n*5+m] = 10*p+n;
+            if(n%2) {
+                p--;
+            }
+            else {
+                p++;
+            }
+        }
+    }
+    p=4;
+    for(n=0;n<5;n++) {
+        for(m=0;m<5;m++) {
+            stationinput[25+n*5+m] = 10*(4-n)+p;
+            if(n%2) {
+                p--;
+            }
+            else {
+                p++;
+            }
+        }
+    }
+    
+    for(n=0;n<50;n++) {
+        printf("%i\n",stationinput[n]);
+    }
+    
+    /*initialisation of the location of the robot*/
+    current_index = 0;
+    passed_crossings = 0;
+    passed_stations = 0;
+    
+    while (detection[0]!=5&&current_index<totalroutelen) {
+        
+        /*has to be reset after zigbee has been called*/
+        instruction[0] = 0;
+        instruction[1] = 0;
+        
+        /*calls zigbee function, which will wait on detections*/
+        zigbee();     
+        
+        /*mine detected*/
+        if(detection[1]) {
+            //mine_detected(); zal niet werken door het oproepen van shortest_route??
+        }
+        
+        /*crossing detected (is not set off for a mine)*/
+        if (detection[0]) {
+            current_crossing(stationinput);
+        }
+        
+        /*for the temporary while condition, to quit the loop*/
+        puts("enter 5 to quit the loop, 1 for a crossing\ndetection simulation, or 0 for continuing");
+        scanf("%i",&detection[0]);
+        puts("enter 1 for a mine detection simulation\nor 0 for continuing");
+        scanf("%i",&detection[1]);
+    }
+    
+    free(stationinput);
+    treasure();
+}
+
+void treasure() {
+    puts("treasure");
 }
 
 void mine_detected() {
@@ -476,19 +550,18 @@ void current_crossing(int* stationinput) {
         }
 
         /*calls zigbee to follow the instruction*/
-        zigbee();
+        zigbee();     
 
         /*updates the current location in the total route array*/
         ++current_index;
     }
- 
+    
     /*gives instruction when on an empty mine spot*/
     else{
         instruction[0] = 1;
         instruction[1] = 1;
-        zigbee();
+        zigbee();      
     }
- 
     /*updates the number of crossings that have been passed*/
     ++passed_crossings;
 }
@@ -537,7 +610,6 @@ int*permute(int*i,int h)
     *i = *(i+h);
     *(i+h) = temp;
     return i+1;
-
 }
 
 void routeconcat(int *list)
@@ -553,7 +625,6 @@ void routeconcat(int *list)
         fputs("Could not allocate that space!",stderr);
         exit(7);
     }
-
     /*Because list does not contain the first station, because the robot always starts there*/
     for(n=nr_of_stations-1;n>0;n--) {
         list[n] = list[n-1];
@@ -601,7 +672,6 @@ void routeconcat(int *list)
         for(n=0;n<nr_of_stations;n++) {
             optimalstations[n] = list[n];
         }
-        
     }
     else {
         /*frees the space for temptotalroute otherwise*/
@@ -624,7 +694,6 @@ void routeconcat(int *list)
     for(n=0;n<nr_of_stations;n++) {
         list[n] = list[n+1];
     }
-
 }
 
 /*calculates shortest route between 2 stations, returns number of crossings*/
