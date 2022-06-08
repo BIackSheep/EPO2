@@ -2,7 +2,7 @@
 #define ROBOT_HEADER_H_INCLUDED
 
 /*for HANDLE type*/
-//#include <Windows.h>              xcode
+//#include <Windows.h>
 
 extern int detection[2];
 extern int instruction[2];
@@ -17,8 +17,10 @@ void mine_detected(void);
 void routeconcat(int *list);
 int *permute(int*i,int h);
 void recursive_permute(int*i,int *j,int n);
+void explore(void);
+void treasure(void);
 
-//void initSio(HANDLE hSerial);                         xcode x4
+//void initSio(HANDLE hSerial);
 //int readByte(HANDLE hSerial, char *buffRead);
 //int writeByte(HANDLE hSerial, char *buffWrite);
 //int zigbee(void);
