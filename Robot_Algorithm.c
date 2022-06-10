@@ -200,9 +200,10 @@ int main(int argc, char const *argv[]) {
 
 void explore() {
     int n=0, m=0, p=4;
+    int routelen = 0;
 
     /*contains a list of all stations in the order given below*/
-    totalroute = (int*)calloc(49, sizeof(int));
+    totalroute = (int*)calloc(100, sizeof(int));
     if(!totalroute) {
         fputs("Could not allocate that space!",stderr);
         exit(4);input_list = (int*)calloc(3*input_len, sizeof(int));
@@ -257,17 +258,20 @@ void explore() {
     /*the robot can stop at c42*/
     totalroutelen = 48;
 
-    for(n=0;n<totalroutelen;n++) {
-        printf("%i\n",totalroute[n]);
-    }
+    totalroute[48] = 0;
+    totalroute[49] = 0;
 
-    /*initialisation of the location of the robot*/
+    /*fill the default map*/
+    maze_init(input_len, input_list);
+
+
+    /*initialization of the location of the robot*/
     current_index = 0;
     passed_crossings = 0;
     passed_stations = 0;
 
-    /*because the robot starts at station 9*/
-    direction = 3;
+    /*because the robot starts at station 1*/
+    direction = 1;
 
     while (detection[0]!=5&&(current_index<(totalroutelen-1)||(passed_crossings%2))) {
         /*has to be reset after zigbee has been called*/
@@ -316,25 +320,41 @@ void explore() {
             /*fill the map as it stands now*/
             maze_init(input_len, input_list);
 
-            /*calculates the shortest route to the next crossing everytime a crossing is encountered*/
-            Lee(13,13);
+            /*calculates the shortest route to the next crossing every time a crossing is encountered*/
+            routelen = Lee(13,13);
+
+            /*levert op het moment wel de gewilde array, maar de instructies worden vervolgens niet goed opgevolgd*/
+
+            /*shift the old totalroute to make room for the amendment*/
+            for(n=totalroutelen-1;n>=0;n--) {
+                totalroute[n+routelen-2] = totalroute[n];
+            }
+            /*paste in the amendment to circumvent the mine*/
+            for(n=0;n<routelen;n++) {
+                totalroute[n+passed_crossings/2] = route[n];
+            }
+
+            puts("\n");
+            for(n=0;n<55;n++) {
+                printf("%i ", totalroute[n]);
+            }
+            puts("\n");
+
+            printf("passed crossings: %i\n",passed_crossings);
 
         }
 
         /*crossing detected (is not set off for a mine)*/
         if (detection[0]) {
-            /*fill the map as it stands now*/
-            maze_init(input_len, input_list);
-
             /*updates the current location and sends instructions*/
             current_crossing();
         }
 
         /*for the temporary while condition, to quit the loop*/
-        puts("enter 5 to quit the loop, 1 for a crossing\ndetection simulation, or 0 for continuing");
-        scanf("%i",&detection[0]);
-        puts("enter 1 for a mine detection simulation\nor 0 for continuing");
-        scanf("%i",&detection[1]);
+        //puts("enter 5 to quit the loop, 1 for a crossing\ndetection simulation, or 0 for continuing");
+        //scanf("%i",&detection[0]);
+        //puts("enter 1 for a mine detection simulation\nor 0 for continuing");
+        //scanf("%i",&detection[1]);
     }
 
     free(totalroute);
@@ -967,9 +987,26 @@ int Lee (int station1, int station2) {
         }
     }
 
+    puts("\n");
+    for(n=0;n<count;n++) {
+        printf("%i\n",route[n]);
+    }
+
+
     /*removing the empty spaces in the route array*/
+    /*has to be done differently for the input given by explore*/
+    if(station2==13) {
+        m=0;
+        for(n=0;n<count;n++) {
+            if(n%2) {
+                *(route+m) = *(route+n);
+                m++;
+            }
+        }
+        count += 2;
+    }
     /*has to be done differently for the input given by mine_detected*/
-    if(station1==13) {
+    else if(station1==13) {
         m=0;
         for(n=0;n<count-1;n++) {
             if(n%2) {
