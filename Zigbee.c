@@ -65,7 +65,7 @@ int readByte(HANDLE hSerial, char *buffRead) {
         //fputs("error reading byte from input buffer \n",stderr);
         //exit(EXIT_FAILURE);
     }
-    printf("Byte read from read buffer is: %c \n", buffRead[0]);
+    //printf("Byte read from read buffer is: %c \n", buffRead[0]);
     return(0);
 }
 
@@ -83,7 +83,7 @@ int writeByte(HANDLE hSerial, char *buffWrite){
         //fputs("error writing byte to output buffer \n",stderr);
         //exit(EXIT_FAILURE);
     }
-    printf("Byte written to write buffer is: %c \n", buffWrite[0]);
+    //printf("Byte written to write buffer is: %c \n", buffWrite[0]);
 
     return(0);
 }
@@ -168,7 +168,7 @@ int zigbee()
             }
 
             /*temporary*/
-            //scanf("%i",&byteBufferRead[0]);
+            scanf("%i",&byteBufferRead[0]);
 
         }
     }

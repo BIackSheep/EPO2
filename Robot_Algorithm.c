@@ -430,7 +430,7 @@ void current_crossing() {
 
     /*determines the direction the robot will have to take for the next station*/
     int case_argument = totalroute[current_index+1]-totalroute[current_index];
-    /*for the last crossing*/
+    /*for every station*/
     if(current_index==totalroutelen-1) {
         case_argument = 0;
     }
