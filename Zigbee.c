@@ -17,37 +17,37 @@ int detection[2] = {0,0};
 //           the COM port
 //--------------------------------------------------------------
 void initSio(HANDLE hSerial){
-    
+
     COMMTIMEOUTS timeouts ={0};
     DCB dcbSerialParams = {0};
-    
+
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    
+
     if (!GetCommState(hSerial, &dcbSerialParams)) {
         //error getting state
-        printf("error getting state \n");
+        //printf("error getting state \n");
     }
-    
+
     dcbSerialParams.BaudRate = BAUDRATE;
     dcbSerialParams.ByteSize = 8;
     dcbSerialParams.StopBits = ONESTOPBIT;
     dcbSerialParams.Parity   = NOPARITY;
-    
+
     if(!SetCommState(hSerial, &dcbSerialParams)){
         //error setting serial port state
-        printf("error setting state \n");
+        //printf("error setting state \n");
     }
-    
+
     timeouts.ReadIntervalTimeout = 50;
     timeouts.ReadTotalTimeoutConstant = 50;
     timeouts.ReadTotalTimeoutMultiplier = 10;
-    
+
     timeouts.WriteTotalTimeoutConstant = 50;
     timeouts.WriteTotalTimeoutMultiplier = 10;
-    
+
     if(!SetCommTimeouts(hSerial, &timeouts)){
         //error occureed. Inform user
-        printf("error setting timeout state \n");
+        //printf("error setting timeout state \n");
     }
 }
 
@@ -57,13 +57,13 @@ void initSio(HANDLE hSerial){
 //              buffer buffRead
 //--------------------------------------------------------------
 int readByte(HANDLE hSerial, char *buffRead) {
-    
+
     DWORD dwBytesRead = 0;
-    
+
     if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
     {
-        fputs("error reading byte from input buffer \n",stderr);
-        exit(EXIT_FAILURE);
+        //fputs("error reading byte from input buffer \n",stderr);
+        //exit(EXIT_FAILURE);
     }
     printf("Byte read from read buffer is: %c \n", buffRead[0]);
     return(0);
@@ -75,27 +75,27 @@ int readByte(HANDLE hSerial, char *buffRead) {
 //              the COM port
 //--------------------------------------------------------------
 int writeByte(HANDLE hSerial, char *buffWrite){
-    
+
     DWORD dwBytesWritten = 0;
-    
+
     if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
     {
-        fputs("error writing byte to output buffer \n",stderr);
-        exit(EXIT_FAILURE);
+        //fputs("error writing byte to output buffer \n",stderr);
+        //exit(EXIT_FAILURE);
     }
     printf("Byte written to write buffer is: %c \n", buffWrite[0]);
-    
+
     return(0);
 }
 
 int zigbee()
 {
     HANDLE hSerial;
-    
+
     char byteBufferRead[BUFSIZ+1];
     char byteBufferWrite[BUFSIZ+1];
     byteBufferRead[0] = 96;
-    
+
     //----------------------------------------------------------
     // Open COMPORT for reading and writing
     //----------------------------------------------------------
@@ -107,12 +107,12 @@ int zigbee()
                          FILE_ATTRIBUTE_NORMAL,
                          0
                          );
-    
+
     if(hSerial == INVALID_HANDLE_VALUE){
         if(GetLastError()== ERROR_FILE_NOT_FOUND){
             /*serial port does not exist. Inform user.*/
-            fputs(" serial port does not exist \n",stderr);
-            exit(EXIT_FAILURE);
+            //fputs(" serial port does not exist \n",stderr);
+            //exit(EXIT_FAILURE);
         }
         //some other error occurred. Inform user.
         else {
@@ -120,23 +120,23 @@ int zigbee()
             exit(EXIT_FAILURE);
         }
     }
-    
+
     //----------------------------------------------------------
     // Initialize the parameters of the COM port
     //----------------------------------------------------------
-    
+
     initSio(hSerial);
-    
+
     /*sends instructions to VHDL*/
     if (instruction[0]==1||instruction[1]==1) {
-        
+
         /*is reset to allow for new detection*/
         detection[0] = 0;
-        
+
         /*this is for the biasing*/
         byteBufferWrite[0] = 96+2*instruction[0]+instruction[1];
         writeByte(hSerial, byteBufferWrite);
-        
+
         /*check*/
         if (instruction[0]==0&&instruction[1]==1) {
             puts("right");
@@ -153,7 +153,7 @@ int zigbee()
         while ( 1 ) {
             /*Waits for an (update in) input*/
             readByte(hSerial, byteBufferRead);
-            
+
             /*One byte with information is sent. The byte is biased at 96 (011000 00). The last bit is 1 for a detected crossing (011000 01)(=97)*/
             if (byteBufferRead[0] == 97){
                 /*a crossing is detected*/
@@ -166,14 +166,14 @@ int zigbee()
                 detection[1] = 1;
                 break;
             }
-            
+
             /*temporary*/
-            /*scanf("%i",&byteBufferRead[0]);*/
-            
+            //scanf("%i",&byteBufferRead[0]);
+
         }
     }
-    
+
     CloseHandle(hSerial);
-    
+
     return 0;
 }
