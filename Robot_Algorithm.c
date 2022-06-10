@@ -409,6 +409,8 @@ void mine_detected() {
     /*determines the location of the crossing that has just been passed, but has to be passed again, needed for Lee*/
     next_crossing = crossings[ totalroute[current_index] / 10 ][ totalroute[current_index] % 10 ];
 
+    printf("next crossing: c%i%i\n",totalroute[current_index] / 10, totalroute[current_index] % 10);
+
     /*empty the totalroute array*/
     for(n=0;n<totalroutelen;n++) {
         totalroute[n] = 0;
@@ -426,8 +428,6 @@ void mine_detected() {
 }
 
 void current_crossing() {
-    puts("crossing detected");
-
     /*determines the direction the robot will have to take for the next station*/
     int case_argument = totalroute[current_index+1]-totalroute[current_index];
     /*for every station*/
@@ -716,12 +716,10 @@ void routeconcat(int *list)
         /*fill the map as is stands now*/
         maze_init(input_len, input_list);
 
-        puts("test1");
-
+        /*calculates the route between 2 stations*/
         routelen = Lee(list[n],list[n+1]);
 
-        puts("test2");
-
+        /*needed to calculate the shortest total route*/
         temptotalroutelen += routelen;
 
         /*adds the route between 2 stations to the temporary total route*/
@@ -745,8 +743,16 @@ void routeconcat(int *list)
     }
     puts("\n");*/
 
+    /*if the calculated route requires the robot to move in a direction that is behind it (which is not wanted)*/
+    if( ((direction==1) && (crossings[temptotalroute[0]/10][temptotalroute[0]%10]==next_crossing+26)) ||
+        ((direction==2) && (crossings[temptotalroute[0]/10][temptotalroute[0]%10]==next_crossing-2)) ||
+        ((direction==3) && (crossings[temptotalroute[0]/10][temptotalroute[0]%10]==next_crossing-26)) ||
+        ((direction==4) && (crossings[temptotalroute[0]/10][temptotalroute[0]%10]==next_crossing+2)) ) {
+        /*frees the space for temptotalroute otherwise*/
+        free(temptotalroute);
+    }
     /*if the calculated route is shorter than the already existing one, it is replaced*/
-    if ((temptotalroutelen<totalroutelen)||totalroutelen==0) {
+    else if ((temptotalroutelen<totalroutelen)||totalroutelen==0) {
         free(totalroute);
         totalroute = temptotalroute;
         totalroutelen = temptotalroutelen;
