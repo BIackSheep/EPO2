@@ -10,11 +10,11 @@
  The list with stations is given. Some part has to keep track of the position of the robot.
  When a mine is detected, a blocked edge must be given to the algorithm together with the already
  existing blocked edges and stations, with the starting station at the current location (which isn't
- a classical station but an edge). Then the journey can continue. ((should be ready now (06-06-2022))
+ a classical station but an edge). Then the journey can continue. ((should be ready now (10-06-2022))
 
  challenge c:
  Exploration:
- The robot has to traverse the entire field (except station entries) in an as short as possible timespan. Everytime a mine is encountered it has to be entered again in the algorithm (but for the algorithm stations have to be given so it will have to be changed??)
+ The robot has to traverse the entire field (except station entries) in an as short as possible timespan. Every time a mine is encountered it has to be entered again in the algorithm.
  Treasure hunt: a new mine is placed, which has to be found in an as short as possible time.
  */
 
@@ -44,33 +44,30 @@ int instruction[2] = {0,0}; /*contains the instructions for zigbee.c to send*/
 int main(int argc, char const *argv[]) {
     int n;  /*temporary variable*/
 
-    puts("Enter number of blocked edges\n (only ones that are already known):");        //moet weg!! (in comments)
-    /*first input, gives input list length*/
+    /*not allowed for the challenges*/ /*
+
+    puts("Enter number of blocked edges:"); */
+    /*first input, gives input list length*/ /*
     scanf("%i",&input_len);
 
     if(input_len) {
-        puts("Enter the blocked edges:");
+        puts("Enter the blocked edges:"); */
         /*each edge has 3 array elements*/
-        input_list = (int*)calloc(3*input_len, sizeof(int));
-        if(!input_list) {
-            fputs("Could not allocate that space!",stderr);
-            exit(1);
-        }
 
-        /*reads input_list*/
-        for(n=0; n<(3*input_len); ++n) {
-            /*reads the characters*/
-            if(!((n+1)%3)) {
-                /*reads \n or space */
-                getchar();
-                /*reads needed char*/
+        /*reads input_list*/ /*
+        for(n=0; n<(3*input_len); ++n) {*/
+            /*reads the characters*/ /*
+            if(!((n+1)%3)) { */
+                /*reads \n or space */ /*
+                getchar();*/
+                /*reads needed char*/ /*
                 input_list[n] = (int)getchar();
                 if(input_list[n]!='e'&&input_list[n]!='s') {
                     puts("Something else than 'e' or 's' was entered");
                     n--;
                 }
-            }
-            /*reads the integers*/
+            }*/
+            /*reads the integers*/ /*
             else {
                 scanf("%i",&input_list[n]);
                 if(input_list[n]=='e'||input_list[n]=='s') {
@@ -79,6 +76,13 @@ int main(int argc, char const *argv[]) {
                 }
             }
         }
+    }*/
+
+    /*because there is a maximum of 13 mines. Using realloc throws errors very often*/
+    input_list = (int*)calloc(3*13, sizeof(int));
+    if(!input_list) {
+        fputs("Could not allocate that space!",stderr);
+        exit(1);
     }
 
     puts("Enter 1 if this is challenge c, otherwise enter 0");
@@ -105,7 +109,6 @@ int main(int argc, char const *argv[]) {
         fputs("Could not allocate that space!",stderr);
         exit(3);
     }
-
     puts("Enter the stations, the first one is where you start:");
     /*reads stations*/
     for(n=0; n<nr_of_stations; ++n) {
@@ -156,7 +159,7 @@ int main(int argc, char const *argv[]) {
     }
 
     /*will have to quit when the last station is reached (5 is thus temporary)*/
-    while (detection[0]!=5&&(current_index<(totalroutelen-1)||(passed_crossings%2))) {
+    while (detection[0]!=5&&(current_index<=(totalroutelen-1)||(passed_crossings%2))) {
         /*has to be reset after zigbee has been called*/
         instruction[0] = 0;
         instruction[1] = 0;
@@ -202,7 +205,11 @@ void explore() {
     totalroute = (int*)calloc(49, sizeof(int));
     if(!totalroute) {
         fputs("Could not allocate that space!",stderr);
-        exit(2);
+        exit(4);input_list = (int*)calloc(3*input_len, sizeof(int));
+        if(!input_list) {
+            fputs("Could not allocate that space!",stderr);
+            exit(1);
+        }
     }
 
     /*robot starts at station 1*/
@@ -277,13 +284,6 @@ void explore() {
 
             /*extra blocked edge*/
             ++input_len;
-
-            /*allocate extra memory for extra blocked edge*/
-            input_list = realloc(input_list,3*input_len);
-            if(!input_list) {
-                fputs("Error reallocating memory!",stderr);
-                exit(5);
-            }
 
             /*puts the new blocked edge into the input_list*/
             if(direction==1) {
@@ -380,13 +380,6 @@ void mine_detected() {
 
     /*extra blocked edge*/
     ++input_len;
-
-    /*allocate extra memory for extra blocked edge*/
-    input_list = realloc(input_list,3*input_len);
-    if(!input_list) {
-        fputs("Error reallocating memory!",stderr);
-        exit(5);
-    }
 
     /*puts the new blocked edge into the input_list*/
     if(direction==1) {
@@ -665,11 +658,11 @@ void shortest_route(int*new_comb,int *shifted_comb,int nr_stations)
     }
 
     /*creates a new tmparray for every instance of this recursive function*/
-    /*the length nr_of_stations is used instead of nr_stations for routeconcat*/
+    /*the length nr_of_stations is used instead of nr_stations for routeconcat.*/
     int *tmparray=(int*)calloc(nr_of_stations,sizeof(int));
     if(!tmparray) {
         fputs("Could not allocate that space!",stderr);
-        exit(6);
+        exit(5);
     }
 
     /*copies the new combinations as it stands now to the tmparray*/
@@ -710,7 +703,7 @@ void routeconcat(int *list)
     temptotalroute = (int*)calloc(100,sizeof(int));
     if(!temptotalroute) {
         fputs("Could not allocate that space!",stderr);
-        exit(7);
+        exit(6);
     }
     /*Because list does not contain the first station, because the robot always starts there*/
     for(n=nr_of_stations-1;n>0;n--) {
@@ -723,8 +716,11 @@ void routeconcat(int *list)
         /*fill the map as is stands now*/
         maze_init(input_len, input_list);
 
-        /*the errors were thrown here, fixed now??*/
+        puts("test1");
+
         routelen = Lee(list[n],list[n+1]);
+
+        puts("test2");
 
         temptotalroutelen += routelen;
 
@@ -798,12 +794,12 @@ int Lee (int station1, int station2) {
     update_array = (int**)calloc(30,sizeof(int*)); /*size 20 is maximum I found, 30 is for security*/
     if(!update_array) {
         fputs("Could not allocate that space!",stderr);
-        exit(8);
+        exit(7);
     }
     update_array_new = (int**)calloc(30,sizeof(int*));
     if(!update_array_new) {
         fputs("Could not allocate that space!",stderr);
-        exit(9);
+        exit(8);
     }
 
     /*if the "endstation" is a place in the middle of the map, next to the beginstation (for explore)*/
@@ -901,7 +897,7 @@ int Lee (int station1, int station2) {
 
         if(count>1000) {                /*arbitrary number of counts*/
             fputs("Error! No path was found between these stations!\n",stderr);
-            exit(10);
+            exit(9);
         }
 
     }
@@ -934,7 +930,7 @@ int Lee (int station1, int station2) {
 
         else {
             fputs("Error! No path was found between these stations!\n",stderr);
-            exit(11);
+            exit(10);
         }
 
         m++;
@@ -953,7 +949,7 @@ int Lee (int station1, int station2) {
     route = (int*)calloc(count,sizeof(int));
     if(!route) {
         fputs("Could not allocate that space!",stderr);
-        exit(12);
+        exit(11);
     }
     for(n=0;n<count;n++) {
         for(m=0;m<5;m++) {
