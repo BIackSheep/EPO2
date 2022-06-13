@@ -3,21 +3,6 @@
 #include <string.h>
 #include "Robot_Header.h"
 
-/*challenge a:
- The list with stations is given, no blocked edges.  (should be ready now (03-06-2022))
-
- challenge b:
- The list with stations is given. Some part has to keep track of the position of the robot.
- When a mine is detected, a blocked edge must be given to the algorithm together with the already
- existing blocked edges and stations, with the starting station at the current location (which isn't
- a classical station but an edge). Then the journey can continue. ((should be ready now (10-06-2022))
-
- challenge c:
- Exploration:
- The robot has to traverse the entire field (except station entries) in an as short as possible timespan. Every time a mine is encountered it has to be entered again in the algorithm.
- Treasure hunt: a new mine is placed, which has to be found in an as short as possible time.
- */
-
 int maze[13][13];       /*is a matrix representation of all distinct locations on the real table*/
 int *stations[12];      /*Every index corresponds to that station, with address in maze as content*/
 int *crossings[5][5];   /*Every index corresponds to that crossing, with address in maze as content*/
@@ -286,6 +271,10 @@ void explore() {
 
             puts("mine detected!");
 
+            /*resetting the mine and crossing detection*/
+            detection[1] = 0;
+            detection[0] = 0;
+
             /*extra blocked edge*/
             ++input_len;
 
@@ -317,8 +306,14 @@ void explore() {
             /*determines the location of the crossing after the detected mine*/
             end_crossing = crossings[ totalroute[current_index] / 10 ][ totalroute[current_index] % 10 ];
 
+            /*because the crossing just passed has to be passed again*/
+            --current_index;
+
             /*fill the map as it stands now*/
             maze_init(input_len, input_list);
+
+            /*because current_crossing isn't called, so the mine isn't counted as a crossing*/
+            ++passed_crossings;
 
             /*calculates the shortest route to the next crossing every time a crossing is encountered*/
             routelen = Lee(13,13);
@@ -331,7 +326,8 @@ void explore() {
             }
             /*paste in the amendment to circumvent the mine*/
             for(n=0;n<routelen;n++) {
-                totalroute[n+passed_crossings/2] = route[n];
+                totalroute[n+current_index] = route[n];
+                //work with current_index
             }
 
             puts("\n");
@@ -340,7 +336,11 @@ void explore() {
             }
             puts("\n");
 
-            printf("passed crossings: %i\n",passed_crossings);
+            /*cases where the robot would have to turn 180 degrees if following the instructions*/
+            if(end_crossing == crossings[0][0] || end_crossing == crossings[4][2] || end_crossing == crossings[0][3] || end_crossing == crossings[4][4] ||
+               end_crossing == crossings[0][4] || end_crossing == crossings[1][0] || end_crossing == crossings[2][4] || end_crossing == crossings[3][0] || end_crossing == crossings[4][4]) {
+                    puts("uh oh");
+               }
 
         }
 
@@ -349,6 +349,8 @@ void explore() {
             /*updates the current location and sends instructions*/
             current_crossing();
         }
+
+        printf("passed crossings: %i\n",passed_crossings);
 
         /*for the temporary while condition, to quit the loop*/
         //puts("enter 5 to quit the loop, 1 for a crossing\ndetection simulation, or 0 for continuing");
@@ -482,6 +484,20 @@ void current_crossing() {
                     instruction[1] = 1;
                     direction = 1;
                     break;
+                    /*may rarely occur between station 7 and 6 or 10 and 9*/
+                case 10:
+                    if (totalroute[current_index+1]==10) {
+                        /*turn left, to turn over the white outside*/
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                    }
+                    if (totalroute[current_index+1]==14) {
+                        /*turn right, to turn over the white outside*/
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                    }
+                    direction = 3;
+                    break;
                     /*when a station must be visited*/
                 case 0:
                     /*turn right*/
@@ -531,6 +547,20 @@ void current_crossing() {
                     instruction[1] = 1;
                     direction = 3;
                     break;
+                    /*may rarely occur between station 7 and 6 or 3 and 4*/
+                case -1:
+                    if (totalroute[current_index+1]==3) {
+                        /*turn left, to turn over the white outside*/
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                    }
+                    if (totalroute[current_index+1]==43) {
+                        /*turn right, to turn over the white outside*/
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                    }
+                    direction = 4;
+                    break;
                     /*station*/
                 case 0:
                     /*turn right*/
@@ -576,6 +606,20 @@ void current_crossing() {
                     instruction[0] = 0;
                     instruction[1] = 1;
                     direction = 4;
+                    break;
+                    /*may rarely occur between station 4 and 3 or 1 and 12*/
+                case -10:
+                    if (totalroute[current_index+1]==34) {
+                        /*turn left, to turn over the white outside*/
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                    }
+                    if (totalroute[current_index+1]==30) {
+                        /*turn right, to turn over the white outside*/
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                    }
+                    direction = 1;
                     break;
                     /*station*/
                 case 0:
@@ -623,6 +667,20 @@ void current_crossing() {
                     instruction[1] = 1;
                     direction = 1;
                     break;
+                    /*may rarely occur between station 1 and 12 or 10 and 9*/
+                case 1:
+                    if (totalroute[current_index+1]==41) {
+                        /*turn left, to turn over the white outside*/
+                        instruction[0] = 1;
+                        instruction[1] = 0;
+                    }
+                    if (totalroute[current_index+1]==1) {
+                        /*turn right, to turn over the white outside*/
+                        instruction[0] = 0;
+                        instruction[1] = 1;
+                    }
+                    direction = 2;
+                    break;
                     /*station*/
                 case 0:
                     /*turn right*/
@@ -668,8 +726,7 @@ void current_crossing() {
 
 /*recursive permutating function, is also called first to start calculating shortest route,
  this is why it is named like this but has the strange arguments*/
-void shortest_route(int*new_comb,int *shifted_comb,int nr_stations)
-{
+void shortest_route(int*new_comb,int *shifted_comb,int nr_stations) {
     /*calculates the shortest route for a unique combinations of stations, when all possible
      permutations for a cycle have been considered*/
     if((shifted_comb-new_comb)==nr_stations-1) {
@@ -704,16 +761,14 @@ void shortest_route(int*new_comb,int *shifted_comb,int nr_stations)
 
 /*switches the number in the given address with the number of address+h,
  returns given adress +1*/
-int*permute(int*i,int h)
-{
+int*permute(int*i,int h) {
     int temp = *i;
     *i = *(i+h);
     *(i+h) = temp;
     return i+1;
 }
 
-void routeconcat(int *list)
-{
+void routeconcat(int *list) {
     int m=0,n=0;
     int index = 0;
     int routelen = 0;
