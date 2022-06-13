@@ -10,12 +10,12 @@
 /*external variable*/
 int detection[2] = {0,0};
 
-//--------------------------------------------------------------
-// Function: initSio
-// Description: intializes the parameters as Baudrate, Bytesize,
-//           Stopbits, Parity and Timeoutparameters of
-//           the COM port
-//--------------------------------------------------------------
+/*--------------------------------------------------------------
+ Function: initSio
+ Description: intializes the parameters as Baudrate, Bytesize,
+           Stopbits, Parity and Timeoutparameters of
+           the COM port
+--------------------------------------------------------------*/
 void initSio(HANDLE hSerial){
 
     COMMTIMEOUTS timeouts ={0};
@@ -24,8 +24,9 @@ void initSio(HANDLE hSerial){
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
     if (!GetCommState(hSerial, &dcbSerialParams)) {
-        //error getting state
-        //printf("error getting state \n");
+        /*error getting state*/
+        printf("error getting state \n");
+        exit(1);
     }
 
     dcbSerialParams.BaudRate = BAUDRATE;
@@ -34,8 +35,9 @@ void initSio(HANDLE hSerial){
     dcbSerialParams.Parity   = NOPARITY;
 
     if(!SetCommState(hSerial, &dcbSerialParams)){
-        //error setting serial port state
-        //printf("error setting state \n");
+        /*error setting serial port state*/
+        printf("error setting state \n");
+        exit(2);
     }
 
     timeouts.ReadIntervalTimeout = 50;
@@ -46,45 +48,45 @@ void initSio(HANDLE hSerial){
     timeouts.WriteTotalTimeoutMultiplier = 10;
 
     if(!SetCommTimeouts(hSerial, &timeouts)){
-        //error occureed. Inform user
-        //printf("error setting timeout state \n");
+        /*error occureed. Inform user*/
+        printf("error setting timeout state \n");
+        exit(3);
     }
 }
 
-//--------------------------------------------------------------
-// Function: readByte
-// Description: reads a single byte from the COM port into
-//              buffer buffRead
-//--------------------------------------------------------------
+/*--------------------------------------------------------------
+ Function: readByte
+ Description: reads a single byte from the COM port into
+              buffer buffRead
+--------------------------------------------------------------*/
 int readByte(HANDLE hSerial, char *buffRead) {
 
     DWORD dwBytesRead = 0;
 
     if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
     {
-        //fputs("error reading byte from input buffer \n",stderr);
-        //exit(EXIT_FAILURE);
+        fputs("error reading byte from input buffer \n",stderr);
+        exit(EXIT_FAILURE);
+        exit(4);
     }
-    //printf("Byte read from read buffer is: %c \n", buffRead[0]);
     return(0);
 }
 
-//--------------------------------------------------------------
-// Function: writeByte
-// Description: writes a single byte stored in buffRead to
-//              the COM port
-//--------------------------------------------------------------
+/*--------------------------------------------------------------
+ Function: writeByte
+ Description: writes a single byte stored in buffRead to
+              the COM port
+--------------------------------------------------------------*/
 int writeByte(HANDLE hSerial, char *buffWrite){
 
     DWORD dwBytesWritten = 0;
 
     if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
     {
-        //fputs("error writing byte to output buffer \n",stderr);
-        //exit(EXIT_FAILURE);
+        fputs("error writing byte to output buffer \n",stderr);
+        exit(EXIT_FAILURE);
+        exit(5);
     }
-    //printf("Byte written to write buffer is: %c \n", buffWrite[0]);
-
     return(0);
 }
 
@@ -96,9 +98,9 @@ int zigbee()
     char byteBufferWrite[BUFSIZ+1];
     byteBufferRead[0] = 96;
 
-    //----------------------------------------------------------
-    // Open COMPORT for reading and writing
-    //----------------------------------------------------------
+    /*----------------------------------------------------------
+            Open COMPORT for reading and writing
+    ----------------------------------------------------------*/
     hSerial = CreateFile(COMPORT,
                          GENERIC_READ | GENERIC_WRITE,
                          0,
@@ -111,19 +113,19 @@ int zigbee()
     if(hSerial == INVALID_HANDLE_VALUE){
         if(GetLastError()== ERROR_FILE_NOT_FOUND){
             /*serial port does not exist. Inform user.*/
-            //fputs(" serial port does not exist \n",stderr);
-            //exit(EXIT_FAILURE);
+            fputs(" serial port does not exist \n",stderr);
+            exit(6);
         }
-        //some other error occurred. Inform user.
+        /*some other error occurred. Inform user.*/
         else {
             printf(" some other error occured. Inform user.\n");
-            exit(EXIT_FAILURE);
+            exit(7);
         }
     }
 
-    //----------------------------------------------------------
-    // Initialize the parameters of the COM port
-    //----------------------------------------------------------
+    /*----------------------------------------------------------
+     Initialize the parameters of the COM port
+    ----------------------------------------------------------*/
 
     initSio(hSerial);
 
@@ -160,8 +162,9 @@ int zigbee()
                 detection[0] = 1;
                 break;
             }
-            /*The second-to-last bit is for a detected mine, which may come with a detected crossing (98 and 99)*/
-            if (byteBufferRead[0] == 98 || byteBufferRead[0] == 99){
+            /*The second-to-last bit is for a detected mine. This does not come with a detected crossing (99) because the mine sensor is located
+            if front of the line sensor*/
+            if (byteBufferRead[0] == 98){
                 /*a mine is detected*/
                 detection[1] = 1;
                 break;
