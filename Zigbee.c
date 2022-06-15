@@ -169,10 +169,6 @@ int zigbee()
                 detection[1] = 1;
                 break;
             }
-
-            /*temporary*/
-            scanf("%i",&byteBufferRead[0]);
-
         }
     }
 
