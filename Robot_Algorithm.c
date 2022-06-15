@@ -103,8 +103,8 @@ int main(int argc, char const *argv[]) {
         direction = 4;
     }
 
-    /*will have to quit when the last station is reached (5 is thus temporary)*/
-    while (detection[0]!=5&&(current_index<=(totalroutelen-1)||(passed_crossings%2))) {
+    /*quits when the last station is reached*/
+    while (current_index<=(totalroutelen-1)||(passed_crossings%2)) {
         /*has to be reset after zigbee has been called*/
         instruction[0] = 0;
         instruction[1] = 0;
