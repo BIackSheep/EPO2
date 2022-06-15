@@ -224,7 +224,7 @@ void explore() {
             /*resetting the mine and crossing detection*/
             detection[1] = 0;
             detection[0] = 0;
-            
+
             /*detects if the mine has already been detected once*/
             m = 0;
             /*checks if the detected mine is somewhere in the list of mines*/
@@ -258,7 +258,7 @@ void explore() {
                     }
                 }
             }
-            
+
             /*if the mine was not detected in the list, m stayed zero*/
             /*if the robot is also in treasure mode, this means the treasure has been found*/
             if(!m&&challengec==2) {
@@ -317,7 +317,7 @@ void explore() {
             for(n=0;n<routelen;n++) {
                 totalroute[n+current_index] = route[n];
             }
-            
+
             totalroutelen += routelen - 2;
 
             puts("\n");
@@ -325,15 +325,15 @@ void explore() {
                 printf("%i ", totalroute[n]);
             }
             puts("\n");
-            
+
             /*if because of the circumvention, the zigzag route continues behind the robot, then
              the route behind the robot is temporarily blocked, and an alternative route is calculated.
              This does not happen for the corners of the map*/
             if(totalroute[routelen+current_index-2]==totalroute[routelen+current_index] && !(totalroute[current_index+routelen-1]==0||totalroute[current_index+routelen-1]==4||totalroute[current_index+routelen-1]==40||totalroute[current_index+routelen-1]==40) ) {
-                
+
                 /*extra blocked edge*/
                 ++input_len;
-                
+
                 /*puts the temporary blocked edge into the input_list*/
                 if(totalroute[current_index+routelen-1]==totalroute[current_index+routelen]-10) {
                     input_list[3*(input_len-1)] = totalroute[current_index+routelen-1] / 10;
@@ -355,20 +355,20 @@ void explore() {
                     input_list[3*(input_len-1)+1] = totalroute[current_index+routelen-1] % 10;
                     input_list[3*(input_len-1)+2] = 101; /*'e'*/
                 }
-                
+
                 /*saving the location of the crossing before the temporary mine, so it can be deleted*/
                 tempmine = 3*(input_len-1);
                 temploc = totalroute[current_index+routelen-1];
-                
+
                 /*next_crossing and end_crossings are still set on the right places*/
-                
+
                 /*fill the map as it stands now*/
                 maze_init(input_len, input_list);
-                
+
                 /*calculates the shortest route to the next crossing*/
                 m=routelen;
                 routelen = Lee(13,13);
-                
+
                 /*shift the old totalroute to make room for the amendment*/
                 for(n=totalroutelen-1;n>=0;n--) {
                     totalroute[n+routelen-m] = totalroute[n];
@@ -377,9 +377,9 @@ void explore() {
                 for(n=0;n<routelen;n++) {
                     totalroute[n+current_index] = route[n];
                 }
-                
+
                 totalroutelen += routelen - m - 2;
-                
+
                 puts("\n");
                 for(n=0;n<55;n++) {
                     printf("%i ", totalroute[n]);
@@ -395,7 +395,7 @@ void explore() {
             printf("Passed crossings: %i\n",passed_crossings);
         }
 
-        
+
         /*removes the temporary blocked edge from the input_list when the robot enters the crossing after the mine*/
         if(totalroute[current_index-1]==temploc) {
             --input_len;
@@ -409,10 +409,10 @@ void explore() {
             puts("removed!");
         }
     }
-    
+
     /*cleanup*/
     free(totalroute);
-    
+
     /*goes into treasure mode*/
     challengec++;
     explore();
@@ -501,6 +501,17 @@ void mine_detected() {
 
     /*starts the search for the shortest route*/
     shortest_route(stationinput+1,stationinput+1,nr_of_stations-1);
+
+    /*prints shortest route*/
+    for(n=0;n<totalroutelen;n++) {
+        if(totalroute[n]>=10) {
+            printf("c%i ", totalroute[n]);
+        }
+        else {
+            printf("c0%i ", totalroute[n]);
+        }
+    }
+    puts("\n");
 }
 
 void current_crossing() {
@@ -953,6 +964,8 @@ int Lee (int station1, int station2) {
     else {
         beginstation = stations[station1 - 1];
     }
+
+    *beginstation = 0;
 
     /*expand fase*/
     while(*beginstation==0) {
